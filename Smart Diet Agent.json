@@ -1,0 +1,299 @@
+{
+  "name": "Smart Diet Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "={{ $json.system_prompt }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        464,
+        0
+      ],
+      "id": "faef6f83-b19c-4617-9651-23e92d3134af",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseMode": "responseNodes"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "876ad126-a734-477a-915e-4480af2d1906",
+      "name": "When chat message received",
+      "webhookId": "ec5e274a-8810-4578-8750-a02c60b4905d"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "cwchang/llama3-taide-lx-8b-chat-alpha1:latest",
+          "mode": "list",
+          "cachedResultName": "cwchang/llama3-taide-lx-8b-chat-alpha1:latest"
+        },
+        "builtInTools": {},
+        "options": {
+          "frequencyPenalty": "={{ $json['Frequency Penalty'] }}",
+          "maxTokens": "={{ $json['Max Tokens'] }}",
+          "temperature": "={{ $json.Temperature }}",
+          "topP": "={{ $json['Top P'] }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        240
+      ],
+      "id": "04d8dcc1-56e9-4184-a250-5f30f8d44f14",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nIqBTTgSpP0deKMd",
+          "name": "OpenAI Local Account Setup (Ollama)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "25c24ef3-46fe-4a5d-9cd5-b6805a373732",
+              "name": "system_prompt",
+              "value": "=You are a nutritionist and structured data generator. \nYour only task is to analyze the foods mentioned by the user and output ONE valid JSON object. \nAll outputs must follow these strict rules:\n\n- Use half-width English punctuation only, e.g. \":\" \",\" \"{}\" \"[]\".\n- Keys must be in English and values in Traditional Chinese.\n- If there are multiple meals (e.g. breakfast, lunch, afternoon tea, dinner, supper), output one JSON object containing an array named \"details\".\n- Each element in \"details\" represents one meal.\n- For any meal where the user explicitly says they did not eat (e.g. \"晚上無食嘢\"), output that meal with empty values and 0 nutritional values.\n- If a meal includes multiple food or drink items (e.g. \"早晨全餐加飲品\"), combine them into one record, including all main ingredients and cooking methods.\n- Never output any text outside the JSON (no explanations, no comments).\n- If data is unknown or not provided, use an empty string \"\" (do not invent or use placeholder words).\n- Do not add or guess any food or drink that the user did not mention.\n- Calorie unit: kcal, macronutrients in grams.\n\nYou must use exactly the same key names as shown in the structure. \nNever create or modify key spellings (for example, use \"sauce_or_seasoning\" only, not \"saute_or_seasoning\").\n\nUse the following structure exactly:\n\n{\n  \"summary\": \"今日餐飲分析\",\n  \"details\": [\n    {\n      \"meal_time\": \"\",\n      \"food_name\": \"\",\n      \"main_ingredient\": \"\",\n      \"cooking_method\": \"\",\n      \"sauce_or_seasoning\": \"\",\n      \"style\": \"\",\n      \"nutrition\": {\n        \"calories\": \"\",\n        \"protein\": \"\",\n        \"fat\": \"\",\n        \"carbohydrates\": \"\",\n        \"fiber\": \"\"\n      }\n    }\n  ]\n}\n\nReturn only the JSON object.",
+              "type": "string"
+            },
+            {
+              "id": "43d25d1c-fd38-47c3-9007-c40772dd6ffe",
+              "name": "message",
+              "value": "={{ $json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "9fa1887c-aa07-4d0c-a9e3-bfaa0122260c",
+              "name": "Temperature",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "1306dd0c-2e9e-4f4d-b2d9-ffc87fb84c30",
+              "name": "Top P",
+              "value": 0.9,
+              "type": "number"
+            },
+            {
+              "id": "3e6473da-a365-4f41-9d0b-8b4313f23408",
+              "name": "Max Tokens",
+              "value": 1500,
+              "type": "number"
+            },
+            {
+              "id": "d5dd7414-dee7-4cf7-974a-44f165dbc6d3",
+              "name": "Stop Sequences",
+              "value": "]}",
+              "type": "string"
+            },
+            {
+              "id": "ebb364e9-7b78-48f9-9922-6ee69969ba69",
+              "name": "Frequency Penalty",
+              "value": 0,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "92a9587b-6bac-4e60-b635-d2461a988b09",
+      "name": "Set Variables",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        224,
+        0
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "=data {{ $json.summary }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1312,
+        -64
+      ],
+      "id": "7945ba57-d42d-49ad-b994-d9fce1226dd0",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.reply }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1.2,
+      "position": [
+        1616,
+        160
+      ],
+      "id": "1fa907a8-521f-45f6-908c-88cde14ed0ea",
+      "name": "Chat",
+      "webhookId": "512b7b42-18d1-4134-ac51-c1c737ab88f8"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 取出 summary（可放入每行一起記錄）\nconst summary = $json.summary;\n// 記錄日期時間\nconst now = new Date().toISOString();\n\n\n// 拉出 details 陣列\nconst items = $json.details.map(d => ({\n  summary,\n  meal_time: d.meal_time ?? \"\",\n  food_name: d.food_name ?? \"\",\n  main_ingredient: d.main_ingredient ?? \"\",\n  cooking_method: d.cooking_method ?? \"\",\n  sauce_or_seasoning: d.sauce_or_seasoning ?? \"\",\n  style: d.style ?? \"\",\n  calories: d.nutrition?.calories ?? \"\",\n  protein: d.nutrition?.protein ?? \"\",\n  fat: d.nutrition?.fat ?? \"\",\n  carbohydrates: d.nutrition?.carbohydrates ?? \"\",\n  fiber: d.nutrition?.fiber ?? \"\",\n  record_date_time:now\n}));\n\nreturn items.map(i => ({ json: i }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        0
+      ],
+      "id": "f9905f76-0489-433b-8907-9cdf705f983b",
+      "name": "Custom Code: Parse to CSV"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Robust JSON repair + parse\n * Handles missing quotes, double-escaped input, stray newlines, etc.\n */\n\nlet raw = $input.first().json.output || \"\";\nif (typeof raw !== \"string\") raw = JSON.stringify(raw);\n\n// Step 1: remove markdown wrappers\nraw = raw.replace(/^```(json)?/i, \"\").replace(/```$/, \"\").trim();\n\n// Step 2: normalize escapes\nraw = raw\n  .replace(/\\\\n/g, \"\\n\")\n  .replace(/\\\\\"/g, '\"')\n  .replace(/\\\\\\\\/g, \"\\\\\");\n\n// Step 3: auto‑repair common key errors like:  ,\\n style\":\nraw = raw.replace(/(\\n|\\r|\\s)style\":/g, '\\n\"style\":');\nraw = raw.replace(/([{,]\\s*)([A-Za-z_][A-Za-z0-9_]*)(\\s*):/g, '$1\"$2\"$3:');\n\n// Step 4: remove trailing commas\nraw = raw.replace(/,\\s*([}\\]])/g, '$1');\n\n// Step 5: try parsing (two‑layer fallback)\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (err1) {\n  try {\n    parsed = JSON.parse(JSON.parse(raw));\n  } catch (err2) {\n    return [{\n      json: {\n        error: \"❌ Could not parse JSON even after auto‑repair\",\n        message1: err1.message,\n        message2: err2.message,\n        preview: raw.slice(0, 600)\n      }\n    }];\n  }\n}\n\n// ✅ Successfully parsed\nreturn [{ json: parsed }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "57f0d645-375b-4e6f-8e99-43dec6cb4edd",
+      "name": "Custom Code: Parse the Output from AI Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Fetch results first\nlet results = $('Custom Code: Parse the Output from AI Agent').first().json.details || [];\n\n// 2. Combine the parsed food names and meal times to detect the language\nlet textToAnalyze = \"\";\nresults.forEach(r => {\n  textToAnalyze += (r.meal_time || \"\") + (r.food_name || \"\");\n});\n\n// Fallback to incoming message just in case\nconst incoming = $input.first().json.message || \"\";\nconst textForDetection = textToAnalyze + incoming;\n\n// 3. Better pattern detection based on the combined text\nconst hasKana = /[\\u3040-\\u30ff\\u31f0-\\u31ff\\uFF66-\\uFF9F]/.test(textForDetection);\nconst hasHanzi = /[\\u4e00-\\u9fa5]/.test(textForDetection);\n\n// 4. Determine Language First\nlet language = \"English\";\nif (hasKana) {\n  language = \"Japanese\";\n} else if (hasHanzi) {\n  language = \"Chinese\";\n}\n\n// Timestamp\nconst now = new Date();\nconst dateOptions = { year: 'numeric', month: 'short', day: 'numeric' };\nconst timeOptions = { hour: 'numeric', minute: '2-digit', second: '2-digit' };\n\n// Set up localized labels (added \"total\") and reply headers\nlet labels = {\n  calories: \"Calories\",\n  fats: \"Fats\",\n  protein: \"Protein\",\n  carbs: \"Carbohydrates\",\n  fiber: \"Fibers\",\n  total: \"Total\"\n};\nlet replyHeader = `Your record has been saved on ${now.toLocaleDateString('en-GB', dateOptions)} at ${now.toLocaleTimeString('en-GB', timeOptions)}. Thank you for using this system!\\n\\nRecord Details:\\n`;\n\nif (language === \"Japanese\") {\n  labels = { calories: \"カロリー\", fats: \"脂質\", protein: \"タンパク質\", carbs: \"炭水化物\", fiber: \"食物繊維\", total: \"合計\" };\n  replyHeader = `あなたの記録は ${now.toLocaleDateString('ja-JP', dateOptions)} ${now.toLocaleTimeString('ja-JP', timeOptions)} に保存されました。ご利用ありがとうございます！\\n\\n記録内容:\\n`;\n} else if (language === \"Chinese\") {\n  labels = { calories: \"卡路里\", fats: \"脂肪\", protein: \"蛋白質\", carbs: \"碳水化合物\", fiber: \"纖維\", total: \"總計\" };\n  replyHeader = `你嘅紀錄已經存檔在 ${now.toLocaleDateString('zh-HK', dateOptions)} ${now.toLocaleTimeString('zh-HK', timeOptions)}，多謝使用本系統！\\n\\n紀錄內容:\\n`;\n}\n\n// Helper function to extract only the numbers from strings like \"30g\" or \"500 kcal\"\nconst extractNumber = (val) => {\n  const num = parseFloat(String(val).replace(/[^0-9.]/g, ''));\n  return isNaN(num) ? 0 : num;\n};\n\n// Variables to keep track of the totals\nlet totalCalories = 0;\nlet totalFats = 0;\nlet totalProtein = 0;\nlet totalCarbs = 0;\nlet totalFiber = 0;\n\n// Build the display details\nlet display_details = \"\";\nresults.forEach((result) => {\n  // Add current meal's nutrition to the totals\n  totalCalories += extractNumber(result.nutrition.calories);\n  totalFats += extractNumber(result.nutrition.fat);\n  totalProtein += extractNumber(result.nutrition.protein);\n  totalCarbs += extractNumber(result.nutrition.carbohydrates);\n  totalFiber += extractNumber(result.nutrition.fiber);\n\n  display_details += `- ${result.meal_time}: ${result.food_name} (${labels.calories}: ${result.nutrition.calories}, ${labels.fats}: ${result.nutrition.fat}, ${labels.protein}: ${result.nutrition.protein}, ${labels.carbs}: ${result.nutrition.carbohydrates}, ${labels.fiber}: ${result.nutrition.fiber})\\n`;\n});\n\n// Append the Total row at the bottom\ndisplay_details += `\\n- ${labels.total}: (${labels.calories}: ${totalCalories}, ${labels.fats}: ${totalFats}g, ${labels.protein}: ${totalProtein}g, ${labels.carbs}: ${totalCarbs}g, ${labels.fiber}: ${totalFiber}g)\\n`;\n\n// Combine the header and the details\nconst reply = display_details;\n\nreturn [{ json: { language, reply } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        160
+      ],
+      "id": "5612283d-8382-4335-b27d-aa42ca48c2d9",
+      "name": "Detect Language of Input Message"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Set Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Custom Code: Parse the Output from AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Variables": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        []
+      ]
+    },
+    "Custom Code: Parse to CSV": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Detect Language of Input Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Custom Code: Parse the Output from AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Custom Code: Parse to CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Language of Input Message": {
+      "main": [
+        [
+          {
+            "node": "Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "26160a65-af64-49a7-a6f5-79a3eba98a3d",
+  "meta": {
+    "instanceId": "3d8809dc8963dcd69511a04dc9ba3b2805dbf7ebb4e574e80850adf3f13b73e6"
+  },
+  "id": "ggNaB0KWuGGgsAtO",
+  "tags": []
+}
