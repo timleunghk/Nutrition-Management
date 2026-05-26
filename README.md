@@ -1,35 +1,39 @@
-# 🥗 Smart Diet AI Agent (n8n + Local LLM)
+# 🥗 Smart Diet AI Agent (n8n + Qwen 2.5 + WhatsApp Integration)
 
-An intelligent, privacy-first dietary tracking agent built with **n8n** and **Local LLM (Ollama + Llama 3)**. This workflow transforms unstructured, natural language food descriptions into structured nutritional data, calculates daily intake, and provides localized feedback without sending sensitive data to external cloud providers.
+An intelligent, privacy-first dietary tracking and conversational agent built with **n8n**, **LangChain**, and a **Local LLM (Qwen 2.5 7B via Ollama)**. This automated workflow acts as a WhatsApp-based nutritionist. It features a multi-agent architecture with conversational memory, capable of distinguishing between casual queries and meal logging, transforming natural language into structured nutritional data without sending sensitive data to external cloud providers.
 
 ## 🌟 Key Features
 
-* **🔒 Privacy-First AI (Local LLM):** Utilizes a locally hosted Llama 3 model (`cwchang/llama3-taide-lx-8b-chat-alpha1`) via Ollama, ensuring 100% data privacy and compliance with enterprise/government security standards.
-* **🧠 Advanced Prompt Engineering:** Forces the LLM to act as a nutritionist and strictly output complex, nested JSON objects detailing meal times, ingredients, cooking methods, and macronutrients.
-* **🛡️ Robust JSON Auto-Repair:** Features a custom JavaScript node designed to intercept and automatically repair malformed JSON outputs from the LLM (e.g., missing quotes, stray newlines, markdown wrappers), ensuring pipeline stability.
-* **🌍 Auto-Language Detection:** Dynamically detects the user's input language (English, Traditional Chinese, Japanese) and formats the final summary and UI labels accordingly.
-* **📊 Automated Nutritional Calculation:** Automatically extracts numeric values from the AI's output and calculates the total daily intake for Calories, Fats, Protein, Carbohydrates, and Fiber.
+* **📱 WhatsApp API & Session Management:** Seamlessly connects with users via a custom WhatsApp API gateway. It utilizes LangChain's `Window Buffer Memory` mapped to the user's WhatsApp ID (`remoteJid`), allowing the AI to remember previous contexts and maintain continuous conversations.
+* **🤖 Multi-Agent Architecture:** Employs a dual-agent system for high reliability:
+  * **Agent 1 (Nutritionist & Extractor):** Handles user intent recognition (chatting vs. logging), generates friendly localized responses, and extracts meal data into a strict JSON format.
+  * **Agent 2 (Data Validator & Translator):** Acts as a background data processing assistant to validate the JSON output, specifically ensuring the `food_name_en` field is present and accurately translated for database consistency.
+* **🧠 Advanced Intent Recognition:** The system intelligently differentiates between "Querying" (e.g., "What did I eat for breakfast?") and "Logging" (e.g., "I just ate an apple"). It only triggers the complex JSON data extraction pipeline when a new meal is logged.
+* **🔒 Privacy-First Local LLM:** Powered by a locally hosted `qwen2.5:7b` model, ensuring 100% data privacy and compliance with enterprise/government data protection standards.
+* **🛡️ Robust JSON Auto-Repair:** Features custom JavaScript nodes designed to intercept, sanitize (e.g., removing markdown blocks, fixing full-width punctuation), and automatically repair malformed JSON outputs from the LLM.
+* **🌍 Strict Language Control:** Explicitly supports English and Chinese (including Cantonese). It dynamically detects the language to format the final WhatsApp summary, while gracefully rejecting unsupported languages to prevent hallucination.
 
 ## 🏗️ Architecture & Workflow
 
 The workflow consists of the following automated steps:
 
-1. **Chat Trigger:** Receives natural language input from the user (e.g., "I had a Big Mac and a Coke for lunch").
-2. **Set Variables:** Initializes strict system prompts, temperature (0 for deterministic output), and token limits.
-3. **AI Agent (LangChain):** Processes the input using the local Llama 3 model to extract structured nutritional data.
-4. **Custom Code - JSON Repair:** Sanitizes and parses the LLM's raw text output into a valid JSON object, preventing pipeline crashes.
-5. **Custom Code - Parse to CSV:** Flattens the nested JSON array into standardized records and appends timestamps.
-6. **Convert to File:** Prepares the structured data for export or database logging.
-7. **Custom Code - Language & Math:** Detects the input language, sums up the macronutrients, and generates a localized summary report.
-8. **Chat Output:** Returns the formatted, calculated nutritional summary back to the user.
+1. **Webhook Trigger (WhatsApp):** Receives incoming natural language messages from the WhatsApp API gateway.
+2. **Memory Initialization:** Loads the user's chat history using LangChain's Memory node based on their unique WhatsApp number.
+3. **Primary AI Agent (Qwen 2.5):** Analyzes the input. If it's a query, it replies conversationally. If it's a meal log, it generates a localized reply alongside a structured markdown JSON block.
+4. **Custom Code - JSON Extraction:** Sanitizes the raw output, extracts the JSON block from the markdown, and handles fallback parsing.
+5. **Secondary AI Agent (Data Validator):** Inspects the parsed JSON and automatically translates Chinese food names into English (`food_name_en`) to ensure strict database schema compliance.
+6. **Custom Code - Parse to CSV & Math:** Flattens the nested JSON array, calculates the total daily intake (Calories, Fats, Protein, Carbohydrates, Fiber), and formats the data based on the detected language.
+7. **Convert to File:** Prepares the structured data as a binary file for potential export or database logging.
+8. **HTTP Request (WhatsApp Output):** Sends a POST request back to the custom WhatsApp API gateway to deliver the formatted response to the user.
 
 ## 📋 Prerequisites
 
 To run this workflow, you will need:
 * **n8n** instance (Self-hosted)
 * **Ollama** installed locally or on a private server
-* A compatible local LLM pulled via Ollama (e.g., `llama3` or `cwchang/llama3-taide-lx-8b-chat-alpha1`)
+* The **Qwen 2.5** model pulled via Ollama (`qwen2.5:7b`)
+* A custom **WhatsApp API Gateway** (e.g., via ngrok) to handle incoming/outgoing messages.
 
 ## 💡 Enterprise / Government Use Case
 
-This workflow demonstrates **Secure Data Extraction & Processing**. By leveraging a local LLM, organizations can process sensitive user data (health records, internal documents, personal identifiable information) without the risk of data leakage associated with public cloud AI APIs. Furthermore, the robust error-handling mechanisms showcase enterprise-grade reliability, ensuring the system remains stable even when AI outputs are unpredictable.
+This workflow demonstrates **Enterprise-grade Conversational AI, Multi-Agent Orchestration, and Secure Data Extraction**. By leveraging a local LLM with session memory, organizations can deploy intelligent assistants for frontline staff or citizens (e.g., fault reporting, health tracking) via familiar platforms like WhatsApp. The dual-agent validation ensures that data entering the backend database is strictly formatted and translated, eliminating the risk of unstructured data corruption while maintaining strict data privacy.

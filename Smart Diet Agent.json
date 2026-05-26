@@ -1,5 +1,5 @@
 {
-  "name": "Smart Diet Agent",
+  "name": "Smart Diet Agent WhatsApp QWen",
   "nodes": [
     {
       "parameters": {
@@ -16,32 +16,16 @@
         464,
         0
       ],
-      "id": "faef6f83-b19c-4617-9651-23e92d3134af",
+      "id": "61c8e017-94b6-4085-b4c9-6296c6f93dbd",
       "name": "AI Agent"
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseMode": "responseNodes"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
-      "typeVersion": 1.4,
-      "position": [
-        0,
-        0
-      ],
-      "id": "876ad126-a734-477a-915e-4480af2d1906",
-      "name": "When chat message received",
-      "webhookId": "ec5e274a-8810-4578-8750-a02c60b4905d"
     },
     {
       "parameters": {
         "model": {
           "__rl": true,
-          "value": "cwchang/llama3-taide-lx-8b-chat-alpha1:latest",
+          "value": "qwen2.5:7b",
           "mode": "list",
-          "cachedResultName": "cwchang/llama3-taide-lx-8b-chat-alpha1:latest"
+          "cachedResultName": "qwen2.5:7b"
         },
         "builtInTools": {},
         "options": {
@@ -54,10 +38,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        464,
-        240
+        336,
+        336
       ],
-      "id": "04d8dcc1-56e9-4184-a250-5f30f8d44f14",
+      "id": "3694e750-4292-413a-9232-a536fa29b6c6",
       "name": "OpenAI Chat Model",
       "credentials": {
         "openAiApi": {
@@ -73,13 +57,13 @@
             {
               "id": "25c24ef3-46fe-4a5d-9cd5-b6805a373732",
               "name": "system_prompt",
-              "value": "=You are a nutritionist and structured data generator. \nYour only task is to analyze the foods mentioned by the user and output ONE valid JSON object. \nAll outputs must follow these strict rules:\n\n- Use half-width English punctuation only, e.g. \":\" \",\" \"{}\" \"[]\".\n- Keys must be in English and values in Traditional Chinese.\n- If there are multiple meals (e.g. breakfast, lunch, afternoon tea, dinner, supper), output one JSON object containing an array named \"details\".\n- Each element in \"details\" represents one meal.\n- For any meal where the user explicitly says they did not eat (e.g. \"晚上無食嘢\"), output that meal with empty values and 0 nutritional values.\n- If a meal includes multiple food or drink items (e.g. \"早晨全餐加飲品\"), combine them into one record, including all main ingredients and cooking methods.\n- Never output any text outside the JSON (no explanations, no comments).\n- If data is unknown or not provided, use an empty string \"\" (do not invent or use placeholder words).\n- Do not add or guess any food or drink that the user did not mention.\n- Calorie unit: kcal, macronutrients in grams.\n\nYou must use exactly the same key names as shown in the structure. \nNever create or modify key spellings (for example, use \"sauce_or_seasoning\" only, not \"saute_or_seasoning\").\n\nUse the following structure exactly:\n\n{\n  \"summary\": \"今日餐飲分析\",\n  \"details\": [\n    {\n      \"meal_time\": \"\",\n      \"food_name\": \"\",\n      \"main_ingredient\": \"\",\n      \"cooking_method\": \"\",\n      \"sauce_or_seasoning\": \"\",\n      \"style\": \"\",\n      \"nutrition\": {\n        \"calories\": \"\",\n        \"protein\": \"\",\n        \"fat\": \"\",\n        \"carbohydrates\": \"\",\n        \"fiber\": \"\"\n      }\n    }\n  ]\n}\n\nReturn only the JSON object.",
+              "value": "=You are a friendly and professional nutritionist AI assistant. \nYou can chat with the user, remember previous contexts, and use available tools to answer questions (e.g., querying past diet records).\n\nSUPPORTED LANGUAGES (CRITICAL):\nThis system ONLY supports Chinese (including Cantonese) and English. If the user's input is in any other language (e.g., Japanese, Korean, French, Spanish), you MUST politely apologize (in English or the user's language) and ask them to input in either Chinese or English. DO NOT process their meal logging or query, and DO NOT generate any JSON block in this case.\n\nCRITICAL DISTINCTION BETWEEN \"QUERYING\" AND \"LOGGING\":\n\n1. WHEN THE USER IS QUERYING OR CHATTING:\nIf the user is asking about past records (e.g., \"what did I eat?\", \"breakfast, lunch and dinner?\"), or just chatting normally, reply ONLY in a friendly, conversational manner. \n- DO NOT output any JSON block. DO NOT generate the ```json ``` block.\n- **LANGUAGE MATCHING:** You MUST reply entirely in the language the user is currently using. If the user asks in English (e.g., \"what did I eat in breakfast?\"), you MUST translate any retrieved Chinese food names into English (e.g., translate \"麥皮\" to \"Oatmeal\", \"漢堡包\" to \"Hamburger\"). If they ask in Chinese, reply in Chinese.\n\n2. WHEN THE USER IS LOGGING A NEW MEAL:\nIf and ONLY if the user is explicitly mentioning eating food right now or logging a new meal (e.g., \"I just ate an apple\", \"Dinner: steak and salad\"), you MUST do TWO things in your final response:\n   - Provide a brief, friendly conversational reply in the user's language. CRITICAL: You MUST acknowledge and summarize EVERY SINGLE MEAL mentioned by the user in their current message. Do not skip any meals. Accurately summarize ONLY the foods the user mentioned for each specific meal. DO NOT hallucinate or repeat food items from one meal into another.\n   - Append a structured JSON analysis of the newly eaten food AT THE END of your response, strictly enclosed in a markdown code block like this: ```json [your json here] ```.\n\nCRITICAL RULES FOR JSON GENERATION (ONLY FOR NEW MEALS):\n1. Keys MUST ALWAYS be in English.\n2. The \"meal_time\" value MUST ALWAYS be in English (strictly use: \"breakfast\", \"lunch\", \"afternoon tea\", \"dinner\", \"supper\" or \"snack\").\n3. **FOOD NAME RULES (CRITICAL FOR DATABASE):**\n   - The \"food_name\" value MUST ALWAYS be in Traditional Chinese, regardless of the user's input language (for database consistency).\n   - You MUST add a new key \"food_name_en\" and provide the accurate English translation of the food name (e.g., \"Apple\", \"Siu Mai\", \"Steak\").\n4. For all other text values (main_ingredient, cooking_method, sauce_or_seasoning, style, summary), detect the user's input language:\n   - If the input contains Chinese/Cantonese, output these values in Traditional Chinese.\n   - If the input is in English, output in English.\n\nJSON FORMATTING RULES:\n- Output the JSON inside ```json and ```.\n- Use half-width English punctuation only.\n- Output one JSON object containing an array named \"details\".\n- CRITICAL: The \"details\" array MUST contain one separate object for EACH meal mentioned by the user in their current message. If they mention breakfast, lunch, and dinner, there must be three objects in the array.\n- If data is unknown, use an empty string \"\".\n- Do not guess unmentioned food.\n- Calorie unit: kcal, macronutrients in grams. Output nutrition values as numbers (e.g., 500), not strings.\n\n---\nEXAMPLES OF LOGGING MULTIPLE MEALS (FOLLOW THESE EXACT STRUCTURES):\n\nEXAMPLE 1 (CHINESE INPUT):\nUser Input: \"早餐食蘋果，午餐食燒賣，晚餐食牛排\"\nYour Response:\n收到！已經幫你記錄低今日嘅餐單：早餐食咗蘋果，午餐係燒賣，而晚餐就食咗牛排。以下係營養分析：\n\n```json\n{\n  \"summary\": \"Daily Meal Analysis\", \n  \"details\": [\n    {\n      \"meal_time\": \"breakfast\", \n      \"food_name\": \"蘋果\",\n      \"food_name_en\": \"Apple\",\n      \"main_ingredient\": \"蘋果\",\n      \"cooking_method\": \"生食\",\n      \"sauce_or_seasoning\": \"\",\n      \"style\": \"水果\",\n      \"nutrition\": {\n        \"calories\": 52,\n        \"protein\": 0.3,\n        \"fat\": 0.2,\n        \"carbohydrates\": 14,\n        \"fiber\": 2.4\n      }\n    },\n    {\n      \"meal_time\": \"lunch\", \n      \"food_name\": \"燒賣\",\n      \"food_name_en\": \"Siu Mai\",\n      \"main_ingredient\": \"豬肉\",\n      \"cooking_method\": \"蒸\",\n      \"sauce_or_seasoning\": \"豉油\",\n      \"style\": \"點心\",\n      \"nutrition\": {\n        \"calories\": 250,\n        \"protein\": 12,\n        \"fat\": 15,\n        \"carbohydrates\": 20,\n        \"fiber\": 1\n      }\n    },\n    {\n      \"meal_time\": \"dinner\", \n      \"food_name\": \"牛排\",\n      \"food_name_en\": \"Steak\",\n      \"main_ingredient\": \"牛肉\",\n      \"cooking_method\": \"煎\",\n      \"sauce_or_seasoning\": \"黑椒汁\",\n      \"style\": \"西式\",\n      \"nutrition\": {\n        \"calories\": 500,\n        \"protein\": 45,\n        \"fat\": 35,\n        \"carbohydrates\": 0,\n        \"fiber\": 0\n      }\n    }\n  ]\n}\n\nEXAMPLE 2 (ENGLISH INPUT):\nUser Input: \"For breakfast I had oatmeal, and for lunch I ate a hamburger.\"\nYour Response:\nGot it! I have recorded your meals: oatmeal for breakfast and a hamburger for lunch. Here is the nutritional analysis:\n\n{\n  \"summary\": \"Daily Meal Analysis\", \n  \"details\": [\n    {\n      \"meal_time\": \"breakfast\", \n      \"food_name\": \"麥皮\",\n      \"food_name_en\": \"Oatmeal\",\n      \"main_ingredient\": \"Oats\",\n      \"cooking_method\": \"Boiled\",\n      \"sauce_or_seasoning\": \"\",\n      \"style\": \"Western\",\n      \"nutrition\": {\n        \"calories\": 150,\n        \"protein\": 5,\n        \"fat\": 2.5,\n        \"carbohydrates\": 27,\n        \"fiber\": 4\n      }\n    },\n    {\n      \"meal_time\": \"lunch\", \n      \"food_name\": \"漢堡包\",\n      \"food_name_en\": \"Hamburger\",\n      \"main_ingredient\": \"Beef\",\n      \"cooking_method\": \"Grilled\",\n      \"sauce_or_seasoning\": \"Ketchup and Mustard\",\n      \"style\": \"Fast Food\",\n      \"nutrition\": {\n        \"calories\": 250,\n        \"protein\": 12,\n        \"fat\": 9,\n        \"carbohydrates\": 31,\n        \"fiber\": 1.5\n      }\n    }\n  ]\n}\n\nEXAMPLE 3 (UNSUPPORTED LANGUAGE INPUT):\nUser Input: \"朝食にりんごを食べました\"\nYour Response:\nSorry, I currently only support Chinese and English. Could you please input your meal in either Chinese or English? / 抱歉，我目前只支援中文或英文，請使用中文或英文輸入您的餐單。\n\nCRITICAL: You MUST ALWAYS include \"food_name_en\" for every food item.\n\nFINAL WARNING: \nBefore you output the JSON, double-check that the \"food_name_en\" key exists in EVERY object inside the \"details\" array. If you output a JSON without \"food_name_en\", the system will crash. DO NOT OMIT \"food_name_en\".",
               "type": "string"
             },
             {
               "id": "43d25d1c-fd38-47c3-9007-c40772dd6ffe",
               "name": "message",
-              "value": "={{ $json.chatInput }}",
+              "value": "={{ $json.body.data.message.conversation }}",
               "type": "string"
             },
             {
@@ -101,12 +85,6 @@
               "type": "number"
             },
             {
-              "id": "d5dd7414-dee7-4cf7-974a-44f165dbc6d3",
-              "name": "Stop Sequences",
-              "value": "]}",
-              "type": "string"
-            },
-            {
               "id": "ebb364e9-7b78-48f9-9922-6ee69969ba69",
               "name": "Frequency Penalty",
               "value": 0,
@@ -116,7 +94,7 @@
         },
         "options": {}
       },
-      "id": "92a9587b-6bac-4e60-b635-d2461a988b09",
+      "id": "9f7b4fb6-9065-4f29-b45c-4884b33a6bfe",
       "name": "Set Variables",
       "type": "n8n-nodes-base.set",
       "position": [
@@ -133,80 +111,130 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        1312,
+        1584,
         -64
       ],
-      "id": "7945ba57-d42d-49ad-b994-d9fce1226dd0",
+      "id": "e5aceaca-bf88-485f-9084-952e268833c0",
       "name": "Convert to File"
     },
     {
       "parameters": {
-        "message": "={{ $json.reply }}",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chat",
-      "typeVersion": 1.2,
-      "position": [
-        1616,
-        160
-      ],
-      "id": "1fa907a8-521f-45f6-908c-88cde14ed0ea",
-      "name": "Chat",
-      "webhookId": "512b7b42-18d1-4134-ac51-c1c737ab88f8"
-    },
-    {
-      "parameters": {
-        "jsCode": "// 取出 summary（可放入每行一起記錄）\nconst summary = $json.summary;\n// 記錄日期時間\nconst now = new Date().toISOString();\n\n\n// 拉出 details 陣列\nconst items = $json.details.map(d => ({\n  summary,\n  meal_time: d.meal_time ?? \"\",\n  food_name: d.food_name ?? \"\",\n  main_ingredient: d.main_ingredient ?? \"\",\n  cooking_method: d.cooking_method ?? \"\",\n  sauce_or_seasoning: d.sauce_or_seasoning ?? \"\",\n  style: d.style ?? \"\",\n  calories: d.nutrition?.calories ?? \"\",\n  protein: d.nutrition?.protein ?? \"\",\n  fat: d.nutrition?.fat ?? \"\",\n  carbohydrates: d.nutrition?.carbohydrates ?? \"\",\n  fiber: d.nutrition?.fiber ?? \"\",\n  record_date_time:now\n}));\n\nreturn items.map(i => ({ json: i }));"
+        "jsCode": "const now = new Date().toISOString();\n\n// 1. 獲取 AI Agent1 傳入嘅原始資料 (留意呢度係攞 .output)\nconst rawOutput = $input.first().json.output;\n\n// 如果冇 output 就直接中止\nif (!rawOutput) {\n  return [];\n}\n\nlet parsedData = {};\n\n// 2. 清除 Markdown 標記 (```json 同 ```) 並 Parse 成 JSON 物件\ntry {\n  // 用 Regex 移除 ```json 同 ```，然後清走頭尾空白\n  const cleanJsonString = rawOutput.replace(/```json\\n?|```/g, '').trim();\n  // 將字串正式轉換為 JSON 物件\n  parsedData = JSON.parse(cleanJsonString);\n} catch (error) {\n  // 如果 AI 畀嘅 JSON 格式有錯，就會入嚟呢度\n  console.error(\"JSON 解析失敗:\", error);\n  return []; \n}\n\n// 3. 檢查是否有 details 陣列 (改為檢查 parsedData)\nif (!parsedData.details || !Array.isArray(parsedData.details) || parsedData.details.length === 0) {\n  return [];\n}\n\n// 4. 如果有記錄，才執行 map 處理\nconst items = parsedData.details.map(d => ({\n  summary: parsedData.summary ?? \"\", \n  meal_time: d.meal_time ?? \"\",\n  food_name: d.food_name ?? \"\",\n  food_name_en: d.food_name_en ?? \"\",\n  main_ingredient: d.main_ingredient ?? \"\",\n  cooking_method: d.cooking_method ?? \"\",\n  sauce_or_seasoning: d.sauce_or_seasoning ?? \"\",\n  style: d.style ?? \"\",\n  calories: d.nutrition?.calories ?? \"\",\n  protein: d.nutrition?.protein ?? \"\",\n  fat: d.nutrition?.fat ?? \"\",\n  carbohydrates: d.nutrition?.carbohydrates ?? \"\",\n  fiber: d.nutrition?.fiber ?? \"\",\n  record_date_time: now\n}));\n\nreturn items;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1088,
+        1376,
         0
       ],
-      "id": "f9905f76-0489-433b-8907-9cdf705f983b",
+      "id": "0abf76bd-b7e8-46c4-bfb7-9b369ac70e62",
       "name": "Custom Code: Parse to CSV"
     },
     {
       "parameters": {
-        "jsCode": "/**\n * Robust JSON repair + parse\n * Handles missing quotes, double-escaped input, stray newlines, etc.\n */\n\nlet raw = $input.first().json.output || \"\";\nif (typeof raw !== \"string\") raw = JSON.stringify(raw);\n\n// Step 1: remove markdown wrappers\nraw = raw.replace(/^```(json)?/i, \"\").replace(/```$/, \"\").trim();\n\n// Step 2: normalize escapes\nraw = raw\n  .replace(/\\\\n/g, \"\\n\")\n  .replace(/\\\\\"/g, '\"')\n  .replace(/\\\\\\\\/g, \"\\\\\");\n\n// Step 3: auto‑repair common key errors like:  ,\\n style\":\nraw = raw.replace(/(\\n|\\r|\\s)style\":/g, '\\n\"style\":');\nraw = raw.replace(/([{,]\\s*)([A-Za-z_][A-Za-z0-9_]*)(\\s*):/g, '$1\"$2\"$3:');\n\n// Step 4: remove trailing commas\nraw = raw.replace(/,\\s*([}\\]])/g, '$1');\n\n// Step 5: try parsing (two‑layer fallback)\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (err1) {\n  try {\n    parsed = JSON.parse(JSON.parse(raw));\n  } catch (err2) {\n    return [{\n      json: {\n        error: \"❌ Could not parse JSON even after auto‑repair\",\n        message1: err1.message,\n        message2: err2.message,\n        preview: raw.slice(0, 600)\n      }\n    }];\n  }\n}\n\n// ✅ Successfully parsed\nreturn [{ json: parsed }];"
+        "jsCode": "let raw = $input.first().json.output || \"\";\n\n// 如果輸入已經是物件，代表已經成功解析，直接回傳\nif (typeof raw === \"object\") {\n  return [{ json: raw }];\n}\n\n// 步驟 1：嘗試從 Markdown 區塊中提取 JSON (對應新 Prompt 的 ```json ... ```)\nlet jsonString = raw;\nconst jsonMatch = raw.match(/```json\\s*([\\s\\S]*?)\\s*```/);\n\nif (jsonMatch && jsonMatch) {\n  // 如果找到 ```json 區塊，只取區塊內的內容\n  jsonString = jsonMatch[1];\n} else {\n  // 如果沒有 ```json，嘗試找第一個 { 和最後一個 } 之間的內容\n  const startIdx = raw.indexOf('{');\n  const endIdx = raw.lastIndexOf('}');\n  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {\n    jsonString = raw.substring(startIdx, endIdx + 1);\n  }\n}\n\n// 步驟 2：將所有全形標點符號強制轉換為標準 JSON 支援的半形符號\njsonString = jsonString\n  .replace(/：/g, ':')         \n  .replace(/，/g, ',')         \n  .replace(/[「」『』“”]/g, '\"')\n  .replace(/\\n/g, '')\n  .replace(/\\r/g, '');\n\n// 步驟 3：嘗試解析 JSON\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonString);\n} catch (err1) {\n  try {\n    // 容錯解析\n    parsed = new Function('return ' + jsonString)();\n  } catch (err2) {\n    // 如果解析失敗，或者用戶只是純聊天沒有觸發 JSON 生成\n    // 我們回傳一個空的 details，讓後續流程不會報錯，並把 Agent 的對話保留\n    return [{\n      json: {\n        summary: \"Chat Only\",\n        details: [],\n        agent_reply: raw, // 保留 Agent 的純文字回覆\n        error: \"No valid JSON found or parsing failed\"\n      }\n    }];\n  }\n}\n\n// 將 Agent 的完整回覆也塞入 parsed 物件中，方便後續 WhatsApp 回覆使用\nparsed.agent_reply = raw;\n\nreturn [{ json: parsed }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        832,
+        816,
         0
       ],
-      "id": "57f0d645-375b-4e6f-8e99-43dec6cb4edd",
+      "id": "15dbae8a-c9ed-4990-8e7c-5910241cae2c",
       "name": "Custom Code: Parse the Output from AI Agent"
     },
     {
       "parameters": {
-        "jsCode": "// 1. Fetch results first\nlet results = $('Custom Code: Parse the Output from AI Agent').first().json.details || [];\n\n// 2. Combine the parsed food names and meal times to detect the language\nlet textToAnalyze = \"\";\nresults.forEach(r => {\n  textToAnalyze += (r.meal_time || \"\") + (r.food_name || \"\");\n});\n\n// Fallback to incoming message just in case\nconst incoming = $input.first().json.message || \"\";\nconst textForDetection = textToAnalyze + incoming;\n\n// 3. Better pattern detection based on the combined text\nconst hasKana = /[\\u3040-\\u30ff\\u31f0-\\u31ff\\uFF66-\\uFF9F]/.test(textForDetection);\nconst hasHanzi = /[\\u4e00-\\u9fa5]/.test(textForDetection);\n\n// 4. Determine Language First\nlet language = \"English\";\nif (hasKana) {\n  language = \"Japanese\";\n} else if (hasHanzi) {\n  language = \"Chinese\";\n}\n\n// Timestamp\nconst now = new Date();\nconst dateOptions = { year: 'numeric', month: 'short', day: 'numeric' };\nconst timeOptions = { hour: 'numeric', minute: '2-digit', second: '2-digit' };\n\n// Set up localized labels (added \"total\") and reply headers\nlet labels = {\n  calories: \"Calories\",\n  fats: \"Fats\",\n  protein: \"Protein\",\n  carbs: \"Carbohydrates\",\n  fiber: \"Fibers\",\n  total: \"Total\"\n};\nlet replyHeader = `Your record has been saved on ${now.toLocaleDateString('en-GB', dateOptions)} at ${now.toLocaleTimeString('en-GB', timeOptions)}. Thank you for using this system!\\n\\nRecord Details:\\n`;\n\nif (language === \"Japanese\") {\n  labels = { calories: \"カロリー\", fats: \"脂質\", protein: \"タンパク質\", carbs: \"炭水化物\", fiber: \"食物繊維\", total: \"合計\" };\n  replyHeader = `あなたの記録は ${now.toLocaleDateString('ja-JP', dateOptions)} ${now.toLocaleTimeString('ja-JP', timeOptions)} に保存されました。ご利用ありがとうございます！\\n\\n記録内容:\\n`;\n} else if (language === \"Chinese\") {\n  labels = { calories: \"卡路里\", fats: \"脂肪\", protein: \"蛋白質\", carbs: \"碳水化合物\", fiber: \"纖維\", total: \"總計\" };\n  replyHeader = `你嘅紀錄已經存檔在 ${now.toLocaleDateString('zh-HK', dateOptions)} ${now.toLocaleTimeString('zh-HK', timeOptions)}，多謝使用本系統！\\n\\n紀錄內容:\\n`;\n}\n\n// Helper function to extract only the numbers from strings like \"30g\" or \"500 kcal\"\nconst extractNumber = (val) => {\n  const num = parseFloat(String(val).replace(/[^0-9.]/g, ''));\n  return isNaN(num) ? 0 : num;\n};\n\n// Variables to keep track of the totals\nlet totalCalories = 0;\nlet totalFats = 0;\nlet totalProtein = 0;\nlet totalCarbs = 0;\nlet totalFiber = 0;\n\n// Build the display details\nlet display_details = \"\";\nresults.forEach((result) => {\n  // Add current meal's nutrition to the totals\n  totalCalories += extractNumber(result.nutrition.calories);\n  totalFats += extractNumber(result.nutrition.fat);\n  totalProtein += extractNumber(result.nutrition.protein);\n  totalCarbs += extractNumber(result.nutrition.carbohydrates);\n  totalFiber += extractNumber(result.nutrition.fiber);\n\n  display_details += `- ${result.meal_time}: ${result.food_name} (${labels.calories}: ${result.nutrition.calories}, ${labels.fats}: ${result.nutrition.fat}, ${labels.protein}: ${result.nutrition.protein}, ${labels.carbs}: ${result.nutrition.carbohydrates}, ${labels.fiber}: ${result.nutrition.fiber})\\n`;\n});\n\n// Append the Total row at the bottom\ndisplay_details += `\\n- ${labels.total}: (${labels.calories}: ${totalCalories}, ${labels.fats}: ${totalFats}g, ${labels.protein}: ${totalProtein}g, ${labels.carbs}: ${totalCarbs}g, ${labels.fiber}: ${totalFiber}g)\\n`;\n\n// Combine the header and the details\nconst reply = display_details;\n\nreturn [{ json: { language, reply } }];"
+        "jsCode": "// 1. 取得 AI 的完整輸出與解析結果\nconst aiOutput = $('Custom Code: Parse the Output from AI Agent').first().json;\nlet results = aiOutput.details || aiOutput['細節'] || [];\n\n// 提取 AI 的純文字回覆\nlet agentReply = aiOutput.agent_reply || \"\";\nlet cleanAgentReply = agentReply.replace(/```json[\\s\\S]*?```/g, '').trim();\n\n// 2. 取得 User 的真正輸入\nconst incoming = $('Set Variables').first().json.message || \"\";\nconst incomingLower = incoming.toLowerCase();\n\n// 3. 語言偵測\nconst textForDetection = incoming.trim() ? incoming : cleanAgentReply; \nconst hasHanzi = /[\\u4e00-\\u9fa5]/.test(textForDetection);\n\nlet language = \"English\";\nif (hasHanzi) {\n  language = \"Chinese\";\n}\n\n// 4. 定義餐次關鍵字 (用嚟配對 User 嘅輸入同埋 AI 嘅輸出)\nconst mealKeywords = {\n  \"breakfast\": [\"breakfast\", \"早餐\", \"早飯\"],\n  \"lunch\": [\"lunch\", \"午餐\", \"晏晝\", \"午飯\"],\n  \"afternoon tea\": [\"afternoon tea\", \"tea\", \"下午茶\"],\n  \"dinner\": [\"dinner\", \"晚餐\", \"晚飯\", \"夜晚\"],\n  \"supper\": [\"supper\", \"宵夜\", \"夜宵\"],\n  \"snack\": [\"snack\", \"小食\", \"零食\", \"茶點\"]\n};\n\n// 檢查 User 輸入咗咩餐次\nlet requestedMeals = [];\nfor (const [meal, keywords] of Object.entries(mealKeywords)) {\n  if (keywords.some(kw => incomingLower.includes(kw))) {\n    requestedMeals.push(meal);\n  }\n}\n\n// 如果 User 有特別講明邊一餐，就過濾 results\nif (requestedMeals.length > 0) {\n  results = results.filter(result => {\n    let rawMealTime = (result.meal_time || result['用餐時間'] || \"\").toLowerCase();\n    \n    // 搵返呢個 rawMealTime 屬於邊個標準餐次\n    let standardMeal = rawMealTime;\n    for (const [meal, keywords] of Object.entries(mealKeywords)) {\n      if (keywords.includes(rawMealTime)) {\n        standardMeal = meal;\n        break;\n      }\n    }\n    // 判斷呢個紀錄係咪 User 想要嘅餐次\n    return requestedMeals.includes(standardMeal);\n  });\n}\n\n// 5. 如果沒有食物記錄 (純聊天或過濾後無紀錄)，直接回覆 AI 的對話並結束\nif (results.length === 0) {\n  // 如果係因為過濾後無紀錄，可以畀個提示\n  if (requestedMeals.length > 0 && (aiOutput.details || []).length > 0) {\n      const emptyMsg = language === \"Chinese\" ? \"找不到該餐次的紀錄。\" : \"No records found for the requested meal.\";\n      return [{ json: { language, reply: emptyMsg } }];\n  }\n  return [{ json: { language, reply: cleanAgentReply } }];\n}\n\n// 6. 計算營養並組合訊息\nconst now = new Date();\nconst dateOptions = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Hong_Kong' };\nconst timeOptions = { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Hong_Kong' };\n\nlet labels = { calories: \"Calories\", fats: \"Fats\", protein: \"Protein\", carbs: \"Carbs\", fiber: \"Fiber\", total: \"Total\" };\nlet replyHeader = `Your record has been saved on ${now.toLocaleDateString('en-HK', dateOptions)} at ${now.toLocaleTimeString('en-HK', timeOptions)}.\\n\\nRecord Details:\\n`;\n\nconst mealTimeDict = {\n  \"English\": { \"breakfast\": \"Breakfast\", \"lunch\": \"Lunch\", \"afternoon tea\": \"Afternoon Tea\", \"dinner\": \"Dinner\", \"supper\": \"Supper\", \"snack\": \"Snack\" },\n  \"Chinese\": { \"breakfast\": \"早餐\", \"lunch\": \"午餐\", \"afternoon tea\": \"下午茶\", \"dinner\": \"晚餐\", \"supper\": \"宵夜\", \"snack\": \"小食\" }\n};\n\nif (language === \"Chinese\") {\n  labels = { calories: \"卡路里\", fats: \"脂肪\", protein: \"蛋白質\", carbs: \"碳水化合物\", fiber: \"纖維\", total: \"總計\" };\n  replyHeader = `你嘅紀錄已經存檔在 ${now.toLocaleDateString('zh-HK', dateOptions)} ${now.toLocaleTimeString('zh-HK', timeOptions)}。\\n\\n紀錄內容:\\n`;\n}\n\n// 如果 User 只係查詢 (例如問 \"dinner?\")，可以轉一轉個 Header 字眼，唔用 \"saved\" (存檔)\nconst isQuery = incomingLower.includes(\"?\") || incomingLower.includes(\"？\") || incomingLower.includes(\"咩\") || incomingLower.includes(\"what\") || incomingLower.includes(\"full day\") || incomingLower.includes(\"全日\");\n\nif (isQuery) {\n  replyHeader = language === \"Chinese\" ? `為你搵到以下紀錄：\\n\\n` : `Here are your requested records:\\n\\n`;\n}\n\nconst extractNumber = (val) => {\n  const num = parseFloat(String(val).replace(/[^0-9.]/g, ''));\n  return isNaN(num) ? 0 : num;\n};\n\nlet totalCalories = 0, totalFats = 0, totalProtein = 0, totalCarbs = 0, totalFiber = 0;\nlet display_details = \"\";\n\nresults.forEach((result) => {\n  let rawMealTime = (result.meal_time || result['用餐時間'] || \"unknown\").toLowerCase();\n  \n  // 轉換餐次做標準英文 key，再轉做顯示語言\n  let standardMealKey = rawMealTime;\n  for (const [meal, keywords] of Object.entries(mealKeywords)) {\n    if (keywords.includes(rawMealTime)) {\n      standardMealKey = meal;\n      break;\n    }\n  }\n  let translatedMealTime = mealTimeDict[language][standardMealKey] || rawMealTime;\n  \n  const foodName = result.food_name || result['食物名稱'] || \"Unknown food\";\n  const foodNameEn = result.food_name_english || result.food_name_en || foodName; \n  \n  let displayFoodName = language === \"English\" ? foodNameEn : foodName;\n  \n  const nutrition = result.nutrition || result['營養'] || {};\n  const cals = nutrition.calories || nutrition['熱量'] || 0;\n  const fat = nutrition.fat || nutrition['脂肪'] || 0;\n  const protein = nutrition.protein || nutrition['蛋白質'] || 0;\n  const carbs = nutrition.carbohydrates || nutrition['碳水化合物'] || 0;\n  const fiber = nutrition.fiber || nutrition['纖維'] || 0;\n\n  totalCalories += extractNumber(cals);\n  totalFats += extractNumber(fat);\n  totalProtein += extractNumber(protein);\n  totalCarbs += extractNumber(carbs);\n  totalFiber += extractNumber(fiber);\n\n  display_details += `- ${translatedMealTime}: ${displayFoodName} (${labels.calories}: ${cals} kcal, ${labels.fats}: ${fat}g, ${labels.protein}: ${protein}g, ${labels.carbs}: ${carbs}g, ${labels.fiber}: ${fiber}g)\\n`;\n});\n\nconst formatNum = (num) => parseFloat(num.toFixed(1));\n\nconst finalCal = formatNum(totalCalories);\nconst finalFats = formatNum(totalFats);\nconst finalProtein = formatNum(totalProtein);\nconst finalCarbs = formatNum(totalCarbs);\nconst finalFiber = formatNum(totalFiber);\n\ndisplay_details += `\\n- ${labels.total}: (${labels.calories}: ${finalCal} kcal, ${labels.fats}: ${finalFats}g, ${labels.protein}: ${finalProtein}g, ${labels.carbs}: ${finalCarbs}g, ${labels.fiber}: ${finalFiber}g)\\n`;\n\nconst finalReply = replyHeader + display_details;\n\nreturn [{ json: { language, reply: finalReply } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1312,
+        1584,
         160
       ],
-      "id": "5612283d-8382-4335-b27d-aa42ca48c2d9",
+      "id": "a652240a-b50a-4221-9f47-d209d77fa2ca",
       "name": "Detect Language of Input Message"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://timleungevolution.ngrok-free.app/message/sendText/n8ngateway",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "D52AAF703D05-4B8D-85B8-9D01190ECD3F"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"number\": $('Webhook').item.json.body.data.key.remoteJid,\n  \"text\": $json.reply,\n  \"options\": {\n    \"delay\": 0,\n    \"presence\": \"composing\"\n  }\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1824,
+        160
+      ],
+      "id": "d8763af5-fdc4-48de-851f-afefdc7530f7",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mydiet",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        32,
+        0
+      ],
+      "id": "a330a034-15ac-400d-a552-1e5f2e2a805f",
+      "name": "Webhook",
+      "webhookId": "7a92a7aa-9a4a-4ddb-a7f2-684c70eea40b"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.data.key.remoteJid }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        512,
+        336
+      ],
+      "id": "6aa10487-7026-43eb-824e-dbeae617251b",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.details[0].food_name }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=你是一個資料處理助手。我會提供一個包含食物資料的 JSON。\n請檢查每一個項目，如果發現 food_name_en（英文名稱）是空的、缺失的，或者不是英文，請根據 food_name（中文名稱）將其翻譯成準確的英文，並填補進去。\n請務必保持原本的 JSON 格式不變，只輸出完整的、已經補全英文名稱的 JSON，不要加入任何其他對話或解釋。"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1008,
+        0
+      ],
+      "id": "9450947d-f30c-41ac-aec1-399e5462ea11",
+      "name": "AI Agent1"
     }
   ],
   "pinData": {},
   "connections": {
-    "When chat message received": {
-      "main": [
-        [
-          {
-            "node": "Set Variables",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "AI Agent": {
       "main": [
         [
@@ -223,6 +251,11 @@
         [
           {
             "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Agent1",
             "type": "ai_languageModel",
             "index": 0
           }
@@ -265,7 +298,7 @@
       "main": [
         [
           {
-            "node": "Custom Code: Parse to CSV",
+            "node": "AI Agent1",
             "type": "main",
             "index": 0
           }
@@ -276,7 +309,45 @@
       "main": [
         [
           {
-            "node": "Chat",
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Custom Code: Parse to CSV",
             "type": "main",
             "index": 0
           }
@@ -288,12 +359,16 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Hong_Kong",
+    "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "26160a65-af64-49a7-a6f5-79a3eba98a3d",
+  "versionId": "e199b6c9-d11a-437d-94ac-4bdb5ca35222",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "3d8809dc8963dcd69511a04dc9ba3b2805dbf7ebb4e574e80850adf3f13b73e6"
   },
-  "id": "ggNaB0KWuGGgsAtO",
+  "id": "Ft5VcCa21qs8MnVp",
   "tags": []
 }
