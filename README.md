@@ -1,5 +1,8 @@
 # 🥗 Smart Diet AI Agent (n8n + Qwen 2.5 + WhatsApp Integration)
 
+
+[![Watch the video for demonstration](https://img.youtube.com/vi/tl7e3zfmM6s/default.jpg)](https://www.youtube.com/watch?v=tl7e3zfmM6s)
+
 An intelligent, privacy-first dietary tracking and conversational agent built with **n8n**, **LangChain**, and a **Local LLM (Qwen 2.5 7B via Ollama)**. This automated workflow acts as a WhatsApp-based nutritionist. It features a multi-agent architecture with conversational memory, capable of distinguishing between casual queries and meal logging, transforming natural language into structured nutritional data without sending sensitive data to external cloud providers.
 
 ## 🌟 Key Features
@@ -37,3 +40,7 @@ To run this workflow, you will need:
 ## 💡 Enterprise / Government Use Case
 
 This workflow demonstrates **Enterprise-grade Conversational AI, Multi-Agent Orchestration, and Secure Data Extraction**. By leveraging a local LLM with session memory, organizations can deploy intelligent assistants for frontline staff or citizens (e.g., fault reporting, health tracking) via familiar platforms like WhatsApp. The dual-agent validation ensures that data entering the backend database is strictly formatted and translated, eliminating the risk of unstructured data corruption while maintaining strict data privacy.
+
+
+
+
