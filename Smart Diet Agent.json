@@ -13,10 +13,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        464,
-        0
+        -1120,
+        64
       ],
-      "id": "61c8e017-94b6-4085-b4c9-6296c6f93dbd",
+      "id": "a2f4ce78-45f3-47a1-b4ec-af2425c27f04",
       "name": "AI Agent"
     },
     {
@@ -38,10 +38,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        336,
-        336
+        -1248,
+        400
       ],
-      "id": "3694e750-4292-413a-9232-a536fa29b6c6",
+      "id": "a3d917c8-4ea0-45b2-8a9e-65c961c62fcd",
       "name": "OpenAI Chat Model",
       "credentials": {
         "openAiApi": {
@@ -94,12 +94,12 @@
         },
         "options": {}
       },
-      "id": "9f7b4fb6-9065-4f29-b45c-4884b33a6bfe",
+      "id": "9088d9a5-f21d-42a6-8bc8-9fcc8f8315d3",
       "name": "Set Variables",
       "type": "n8n-nodes-base.set",
       "position": [
-        224,
-        0
+        -1360,
+        64
       ],
       "typeVersion": 3.4
     },
@@ -111,23 +111,23 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        1584,
-        -64
+        0,
+        0
       ],
-      "id": "e5aceaca-bf88-485f-9084-952e268833c0",
+      "id": "a0cdc92b-a4fb-4f79-b70e-d7faeb4ee1d2",
       "name": "Convert to File"
     },
     {
       "parameters": {
-        "jsCode": "const now = new Date().toISOString();\n\n// 1. 獲取 AI Agent1 傳入嘅原始資料 (留意呢度係攞 .output)\nconst rawOutput = $input.first().json.output;\n\n// 如果冇 output 就直接中止\nif (!rawOutput) {\n  return [];\n}\n\nlet parsedData = {};\n\n// 2. 清除 Markdown 標記 (```json 同 ```) 並 Parse 成 JSON 物件\ntry {\n  // 用 Regex 移除 ```json 同 ```，然後清走頭尾空白\n  const cleanJsonString = rawOutput.replace(/```json\\n?|```/g, '').trim();\n  // 將字串正式轉換為 JSON 物件\n  parsedData = JSON.parse(cleanJsonString);\n} catch (error) {\n  // 如果 AI 畀嘅 JSON 格式有錯，就會入嚟呢度\n  console.error(\"JSON 解析失敗:\", error);\n  return []; \n}\n\n// 3. 檢查是否有 details 陣列 (改為檢查 parsedData)\nif (!parsedData.details || !Array.isArray(parsedData.details) || parsedData.details.length === 0) {\n  return [];\n}\n\n// 4. 如果有記錄，才執行 map 處理\nconst items = parsedData.details.map(d => ({\n  summary: parsedData.summary ?? \"\", \n  meal_time: d.meal_time ?? \"\",\n  food_name: d.food_name ?? \"\",\n  food_name_en: d.food_name_en ?? \"\",\n  main_ingredient: d.main_ingredient ?? \"\",\n  cooking_method: d.cooking_method ?? \"\",\n  sauce_or_seasoning: d.sauce_or_seasoning ?? \"\",\n  style: d.style ?? \"\",\n  calories: d.nutrition?.calories ?? \"\",\n  protein: d.nutrition?.protein ?? \"\",\n  fat: d.nutrition?.fat ?? \"\",\n  carbohydrates: d.nutrition?.carbohydrates ?? \"\",\n  fiber: d.nutrition?.fiber ?? \"\",\n  record_date_time: now\n}));\n\nreturn items;"
+        "jsCode": "const now = new Date().toISOString();\nlet rawOutput = $input.first().json.output;\n\n// 如果沒有 output 就直接中止\nif (!rawOutput) {\n  return [];\n}\n\nlet parsedData = {};\n\n// 1. 判斷 rawOutput 是否已經是 Object (有時候 n8n/LangChain 會自動幫你 Parse 好)\nif (typeof rawOutput === 'object') {\n  parsedData = rawOutput;\n} else {\n  // 2. 如果是字串，進行安全清理並 Parse\n  try {\n    let cleanJsonString = rawOutput.trim();\n    \n    // 安全清除外層的 Markdown 標記 (不要用全域替換 /g，以免破壞 agent_reply 裡面的 JSON 結構)\n    if (cleanJsonString.startsWith('```json')) {\n      cleanJsonString = cleanJsonString.replace(/^```json\\n?/, '');\n    }\n    if (cleanJsonString.endsWith('```')) {\n      cleanJsonString = cleanJsonString.replace(/\\n?```$/, '');\n    }\n    \n    parsedData = JSON.parse(cleanJsonString);\n  } catch (error) {\n    // 【關鍵修改】如果解析失敗，回傳具體的錯誤訊息，方便你在 n8n 介面上 Debug！\n    return [{ \n      json: { \n        error: \"JSON 解析失敗\", \n        errorMessage: error.message, \n        rawString: rawOutput \n      } \n    }];\n  }\n}\n\n// 3. 檢查是否有 details 陣列\nif (!parsedData.details || !Array.isArray(parsedData.details) || parsedData.details.length === 0) {\n  return [{ \n    json: { \n      error: \"找不到 details 陣列或陣列為空\", \n      parsedData: parsedData \n    } \n  }];\n}\n\n// 4. 如果有記錄，才執行 map 處理\nconst items = parsedData.details.map(d => ({\n  summary: parsedData.summary ?? \"\", \n  meal_time: d.meal_time ?? \"\",\n  food_name: d.food_name ?? \"\",\n  food_name_en: d.food_name_en ?? \"\",\n  main_ingredient: d.main_ingredient ?? \"\",\n  cooking_method: d.cooking_method ?? \"\",\n  sauce_or_seasoning: d.sauce_or_seasoning ?? \"\",\n  style: d.style ?? \"\",\n  calories: d.nutrition?.calories ?? \"\",\n  protein: d.nutrition?.protein ?? \"\",\n  fat: d.nutrition?.fat ?? \"\",\n  carbohydrates: d.nutrition?.carbohydrates ?? \"\",\n  fiber: d.nutrition?.fiber ?? \"\",\n  record_date_time: now\n}));\n\nreturn items;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1376,
-        0
+        -208,
+        64
       ],
-      "id": "0abf76bd-b7e8-46c4-bfb7-9b369ac70e62",
+      "id": "4012817a-45ac-4125-a790-b49fd4657168",
       "name": "Custom Code: Parse to CSV"
     },
     {
@@ -137,10 +137,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        816,
-        0
+        -768,
+        64
       ],
-      "id": "15dbae8a-c9ed-4990-8e7c-5910241cae2c",
+      "id": "c260bf95-f713-4918-adb0-d352ca60b3cb",
       "name": "Custom Code: Parse the Output from AI Agent"
     },
     {
@@ -150,10 +150,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1584,
-        160
+        0,
+        224
       ],
-      "id": "a652240a-b50a-4221-9f47-d209d77fa2ca",
+      "id": "92818104-f880-4f2b-b4c9-48c93af006bd",
       "name": "Detect Language of Input Message"
     },
     {
@@ -177,10 +177,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1824,
-        160
+        240,
+        224
       ],
-      "id": "d8763af5-fdc4-48de-851f-afefdc7530f7",
+      "id": "15d776be-528d-4e83-be43-567e40f75369",
       "name": "HTTP Request"
     },
     {
@@ -193,31 +193,32 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        32,
-        0
+        -1552,
+        64
       ],
-      "id": "a330a034-15ac-400d-a552-1e5f2e2a805f",
+      "id": "c9ec8412-611c-4ad4-990a-58a44b5ef3a3",
       "name": "Webhook",
       "webhookId": "7a92a7aa-9a4a-4ddb-a7f2-684c70eea40b"
     },
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Webhook').item.json.body.data.key.remoteJid }}"
+        "sessionKey": "={{ $('Webhook').item.json.body.data.key.remoteJid }}",
+        "contextWindowLength": 10
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        512,
-        336
+        -1072,
+        400
       ],
-      "id": "6aa10487-7026-43eb-824e-dbeae617251b",
+      "id": "6cd11400-4ccd-4ef2-95b1-a55fe28efbae",
       "name": "Simple Memory"
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.details[0].food_name }}",
+        "text": "={{ JSON.stringify($json) }}",
         "hasOutputParser": true,
         "options": {
           "systemMessage": "=你是一個資料處理助手。我會提供一個包含食物資料的 JSON。\n請檢查每一個項目，如果發現 food_name_en（英文名稱）是空的、缺失的，或者不是英文，請根據 food_name（中文名稱）將其翻譯成準確的英文，並填補進去。\n請務必保持原本的 JSON 格式不變，只輸出完整的、已經補全英文名稱的 JSON，不要加入任何其他對話或解釋。"
@@ -226,10 +227,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        1008,
-        0
+        -576,
+        64
       ],
-      "id": "9450947d-f30c-41ac-aec1-399e5462ea11",
+      "id": "e7a5a292-92fc-4e12-904c-c7328900ac89",
       "name": "AI Agent1"
     }
   ],
@@ -271,11 +272,6 @@
             "index": 0
           }
         ]
-      ]
-    },
-    "Convert to File": {
-      "main": [
-        []
       ]
     },
     "Custom Code: Parse to CSV": {
@@ -334,11 +330,6 @@
             "node": "AI Agent",
             "type": "ai_memory",
             "index": 0
-          },
-          {
-            "node": "AI Agent1",
-            "type": "ai_memory",
-            "index": 0
           }
         ]
       ]
@@ -358,17 +349,12 @@
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
-    "availableInMCP": false,
-    "timeSavedMode": "fixed",
-    "timezone": "Asia/Hong_Kong",
-    "callerPolicy": "workflowsFromSameOwner"
+    "binaryMode": "separate"
   },
-  "versionId": "e199b6c9-d11a-437d-94ac-4bdb5ca35222",
+  "versionId": "78a2a84d-fb14-480b-8b08-c132c4036aa4",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "3d8809dc8963dcd69511a04dc9ba3b2805dbf7ebb4e574e80850adf3f13b73e6"
   },
-  "id": "Ft5VcCa21qs8MnVp",
+  "id": "8XaR5g2EZJGCK82x",
   "tags": []
 }
