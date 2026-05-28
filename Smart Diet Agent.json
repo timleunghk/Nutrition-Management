@@ -1,11 +1,12 @@
 {
-  "name": "Smart Diet Agent WhatsApp QWen",
+  "name": "Smart Diet Agent WhatsApp QWen - Structured output JSON Parser",
   "nodes": [
     {
       "parameters": {
         "promptType": "define",
         "text": "={{ $json.message }}",
         "hasOutputParser": true,
+        "needsFallback": true,
         "options": {
           "systemMessage": "={{ $json.system_prompt }}"
         }
@@ -13,19 +14,21 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -1264,
-        64
+        -1232,
+        48
       ],
-      "id": "a2f4ce78-45f3-47a1-b4ec-af2425c27f04",
-      "name": "AI Agent"
+      "id": "3e1a83c0-29d6-448e-bf8d-ee881ae64a32",
+      "name": "AI Agent",
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "model": {
           "__rl": true,
-          "value": "qwen2.5:7b",
+          "value": "qwen3.5:9b",
           "mode": "list",
-          "cachedResultName": "qwen2.5:7b"
+          "cachedResultName": "qwen3.5:9b"
         },
         "builtInTools": {},
         "options": {
@@ -41,7 +44,7 @@
         -1360,
         400
       ],
-      "id": "a3d917c8-4ea0-45b2-8a9e-65c961c62fcd",
+      "id": "73206d9f-9f9c-44d5-a07a-2272a713d489",
       "name": "OpenAI Chat Model",
       "credentials": {
         "openAiApi": {
@@ -57,7 +60,7 @@
             {
               "id": "25c24ef3-46fe-4a5d-9cd5-b6805a373732",
               "name": "system_prompt",
-              "value": "==You are a  professional nutritionist AI assistant.\n\n[CRITICAL LANGUAGE INSTRUCTION - HIGHEST PRIORITY]\nThe user is currently speaking in: {{ /[\\u4e00-\\u9fa5]/.test($json.body.data.message.conversation) ? 'Traditional Chinese (Cantonese)' : 'English' }}.\nYou MUST reply ENTIRELY in {{ /[\\u4e00-\\u9fa5]/.test($json.body.data.message.conversation) ? 'Traditional Chinese (Cantonese)' : 'English' }}. Do not use any other language for your conversational replies.\n\n[OPERATIONAL MODES]\n1. WHEN THE USER IS QUERYING OR CHATTING:\n- Output format: PLAIN TEXT ONLY.\n- Reply directly to the user's question in their language.\n- DO NOT ask follow-up questions. Be concise.\n\n2. WHEN THE USER IS LOGGING A NEW MEAL:\n- Output format: STRICTLY JSON ONLY. DO NOT output any plain text outside the JSON.\n- Put your friendly conversational reply inside the \"agent_reply\" field. It MUST be in {{ /[\\u4e00-\\u9fa5]/.test($json.body.data.message.conversation) ? 'Traditional Chinese' : 'English' }}.\n\nCRITICAL RULES FOR JSON GENERATION:\n1. Keys MUST ALWAYS be in English.\n2. \"meal_time\" MUST ALWAYS be in English (\"breakfast\", \"lunch\", \"dinner\", \"snack\").\n3. \"food_name\" MUST ALWAYS be in Traditional Chinese (for database consistency).\n4. \"food_name_en\" MUST ALWAYS be the accurate English translation.\n5. Other fields (main_ingredient, cooking_method, sauce_or_seasoning, style, summary) MUST be in {{ /[\\u4e00-\\u9fa5]/.test($json.body.data.message.conversation) ? 'Traditional Chinese' : 'English' }}.\n6. The JSON must contain \"agent_reply\", \"summary\", and an array named \"details\".\n\nEXAMPLE 1 (CHINESE INPUT):\nUser: \"早餐食蘋果\"\nOutput:\n{\n  \"agent_reply\": \"收到！已經幫你記錄低早餐食咗蘋果。以下係營養分析：\",\n  \"summary\": \"日常飲食記錄\", \n  \"details\": [\n    {\n      \"meal_time\": \"breakfast\", \n      \"food_name\": \"蘋果\",\n      \"food_name_en\": \"Apple\",\n      \"main_ingredient\": \"蘋果\",\n      \"cooking_method\": \"生食\",\n      \"sauce_or_seasoning\": \"\",\n      \"style\": \"水果\",\n      \"nutrition\": {\"calories\": 52, \"protein\": 0.3, \"fat\": 0.2, \"carbohydrates\": 14, \"fiber\": 2.4}\n    }\n  ]\n}\n\nEXAMPLE 2 (ENGLISH INPUT):\nUser: \"For breakfast I had oatmeal.\"\nOutput:\n{\n  \"agent_reply\": \"Got it! I have recorded your meal: oatmeal for breakfast. Here is the nutritional analysis:\",\n  \"summary\": \"Daily Meal Analysis\", \n  \"details\": [\n    {\n      \"meal_time\": \"breakfast\", \n      \"food_name\": \"麥皮\",\n      \"food_name_en\": \"Oatmeal\",\n      \"main_ingredient\": \"Oats\",\n      \"cooking_method\": \"Boiled\",\n      \"sauce_or_seasoning\": \"\",\n      \"style\": \"Western\",\n      \"nutrition\": {\"calories\": 150, \"protein\": 5, \"fat\": 2.5, \"carbohydrates\": 27, \"fiber\": 4}\n    }\n  ]\n}",
+              "value": "=You are a professional nutritionist AI assistant. You must always output your response in valid JSON format.\n\n[LANGUAGE INSTRUCTIONS]\n1. Conversational Reply (\"agent_reply\"): \n   You MUST write your conversational response ENTIRELY in {{ /[\\u4e00-\\u9fa5]/.test($json.body.data.message.conversation) ? 'Traditional Chinese (Cantonese)' : 'English' }}.\n\n2. Data Fields (inside the \"details\" array):\n   - \"food_name\" MUST ALWAYS be in Traditional Chinese, regardless of the user's language.\n   - \"food_name_en\" MUST ALWAYS be the accurate English translation.\n   - \"meal_time\" MUST ALWAYS be in English (e.g., \"breakfast\", \"lunch\", \"dinner\", \"snack\").\n   - All other text fields in the details array MUST be in {{ /[\\u4e00-\\u9fa5]/.test($json.body.data.message.conversation) ? 'Traditional Chinese' : 'English' }}.\n\n[BEHAVIOR RULES]\n1. IF THE USER IS JUST CHATTING OR ASKING A QUESTION:\n   - Answer their question directly in the \"agent_reply\" field.\n   - Set \"summary\" to \"Chat\".\n   - Leave the \"details\" array EMPTY [].\n\n2. IF THE USER IS LOGGING A MEAL:\n   - Put your friendly confirmation/analysis in the \"agent_reply\" field.\n   - Set \"summary\" to a short description of the meal.\n   - Fill out the \"details\" array with the food nutritional info according to the language rules above.",
               "type": "string"
             },
             {
@@ -94,53 +97,26 @@
         },
         "options": {}
       },
-      "id": "9088d9a5-f21d-42a6-8bc8-9fcc8f8315d3",
+      "id": "1b3c7d5a-cd44-4954-a0ed-9de711578b41",
       "name": "Set Variables",
       "type": "n8n-nodes-base.set",
       "position": [
         -1472,
-        64
+        48
       ],
       "typeVersion": 3.4
     },
     {
       "parameters": {
-        "binaryPropertyName": "=data {{ $json.summary }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.convertToFile",
-      "typeVersion": 1.1,
-      "position": [
-        -240,
-        0
-      ],
-      "id": "a0cdc92b-a4fb-4f79-b70e-d7faeb4ee1d2",
-      "name": "Convert to File"
-    },
-    {
-      "parameters": {
-        "jsCode": "// 1. 取得 JSON 資料\nlet inputData = $input.first().json;\nlet data = inputData.original_data || inputData;\nlet finalMessage = \"\";\n\n// 2. 判斷 details 是否存在且有內容\nif (data.details && Array.isArray(data.details) && data.details.length > 0) {\n    \n    // 【關鍵修改】改為偵測「使用者的原始輸入」是否有中文，而不是偵測 AI 的回覆\n    let userMessage = \"\";\n    try {\n        userMessage = $('Webhook').item.json.body.data.message.conversation || \"\";\n    } catch(e) {\n        userMessage = data.agent_reply || \"\";\n    }\n    const isChinese = /[\\u4e00-\\u9fa5]/.test(userMessage);\n    \n    // 取得現在時間並格式化\n    const now = new Date();\n    now.setHours(now.getHours() + 8); \n    \n    const year = now.getUTCFullYear();\n    const month = now.getUTCMonth() + 1;\n    const day = now.getUTCDate();\n    let hours = now.getUTCHours();\n    const minutes = now.getUTCMinutes().toString().padStart(2, '0');\n    const seconds = now.getUTCSeconds().toString().padStart(2, '0');\n    \n    const ampmEN = hours >= 12 ? 'PM' : 'AM';\n    const ampmZH = hours >= 12 ? '下午' : '上午';\n    let hours12 = hours % 12;\n    hours12 = hours12 ? hours12 : 12;\n\n    const dateStrZH = `${year}年${month}月${day}日 ${ampmZH}${hours12}:${minutes}:${seconds}`;\n    const dateStrEN = `${year}/${month}/${day} ${hours12}:${minutes}:${seconds}${ampmEN}`;\n\n    let totalCal = 0, totalFat = 0, totalPro = 0, totalCarb = 0, totalFib = 0;\n    let itemsText = \"\";\n\n    data.details.forEach(item => {\n        let meal = item.meal_time ? item.meal_time.toLowerCase() : \"snack\";\n        let foodName = isChinese ? (item.food_name || item.food_name_en) : (item.food_name_en || item.food_name);\n        \n        let cal = item.nutrition?.calories || 0;\n        let fat = item.nutrition?.fat || 0;\n        let pro = item.nutrition?.protein || 0;\n        let carb = item.nutrition?.carbohydrates || 0;\n        let fib = item.nutrition?.fiber || 0;\n\n        totalCal += cal; totalFat += fat; totalPro += pro; totalCarb += carb; totalFib += fib;\n\n        const fmt = (num) => Math.round(num * 10) / 10;\n\n        if (isChinese) {\n            const mealMapZH = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '小食' };\n            meal = mealMapZH[meal] || meal;\n            itemsText += `- ${meal}: ${foodName} (卡路里: ${fmt(cal)} kcal, 脂肪: ${fmt(fat)}g, 蛋白質: ${fmt(pro)}g, 碳水化合物: ${fmt(carb)}g, 纖維: ${fmt(fib)}g)\\n`;\n        } else {\n            const mealMapEN = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack' };\n            meal = mealMapEN[meal] || meal.charAt(0).toUpperCase() + meal.slice(1);\n            itemsText += `- ${meal}: ${foodName} (Calories: ${fmt(cal)} kcal, Fats: ${fmt(fat)}g, Protein: ${fmt(pro)}g, Carbs: ${fmt(carb)}g, Fiber: ${fmt(fib)}g)\\n\\n`;\n        }\n    });\n\n    const fmtTotal = (num) => Math.round(num * 10) / 10;\n\n    if (isChinese) {\n        finalMessage = `你嘅紀錄已經存檔在 ${dateStrZH}。\\n\\n紀錄內容:\\n${itemsText}\\n- 總計: (卡路里: ${fmtTotal(totalCal)} kcal, 脂肪: ${fmtTotal(totalFat)}g, 蛋白質: ${fmtTotal(totalPro)}g, 碳水化合物: ${fmtTotal(totalCarb)}g, 纖維: ${fmtTotal(totalFib)}g)`;\n    } else {\n        itemsText = itemsText.trimEnd();\n        finalMessage = `Your record has been saved at ${dateStrEN}:\\n\\n${itemsText}\\n\\n- Total: (Calories: ${fmtTotal(totalCal)} kcal, Fats: ${fmtTotal(totalFat)}g, Protein: ${fmtTotal(totalPro)}g, Carbs: ${fmtTotal(totalCarb)}g, Fiber: ${fmtTotal(totalFib)}g)`;\n    }\n\n} else {\n    finalMessage = data.agent_reply || \"已收到您的訊息。 / Message received.\";\n}\n\nreturn [{\n    json: {\n        reply_text: finalMessage,\n        original_data: inputData\n    }\n}];"
+        "jsCode": "// 1. 取得上一個節點傳進來的資料\nconst inputData = $input.first().json;\n\n// 2. 提取準備要發送的回覆內容\nconst replyText = inputData.reply_text || \"\";\n\n// 3. 語言偵測 (檢查回覆內容中是否包含中文字)\nconst hasHanzi = /[\\u4e00-\\u9fa5]/.test(replyText);\n\nlet language = \"English\";\nif (hasHanzi) {\n    language = \"Chinese\";\n}\n\n// 4. 輸出結果給下一個節點 (HTTP Request)\nreturn [{\n    json: {\n        language: language,\n        reply: $input.first().json.output.agent_reply\n    }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -752,
-        64
+        -704,
+        -32
       ],
-      "id": "c260bf95-f713-4918-adb0-d352ca60b3cb",
-      "name": "Custom Code: Parse the Output from AI Agent"
-    },
-    {
-      "parameters": {
-        "jsCode": "// 1. 取得上一個節點傳進來的資料\nconst inputData = $input.first().json;\n\n// 2. 提取準備要發送的回覆內容\nconst replyText = inputData.reply_text || \"\";\n\n// 3. 語言偵測 (檢查回覆內容中是否包含中文字)\nconst hasHanzi = /[\\u4e00-\\u9fa5]/.test(replyText);\n\nlet language = \"English\";\nif (hasHanzi) {\n    language = \"Chinese\";\n}\n\n// 4. 輸出結果給下一個節點 (HTTP Request)\nreturn [{\n    json: {\n        language: language,\n        reply: replyText\n    }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -224,
-        208
-      ],
-      "id": "92818104-f880-4f2b-b4c9-48c93af006bd",
+      "id": "d14f02d6-34bc-4394-8293-809d990fb6b0",
       "name": "Detect Language of Input Message"
     },
     {
@@ -164,16 +140,16 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        0,
-        208
+        -320,
+        64
       ],
-      "id": "15d776be-528d-4e83-be43-567e40f75369",
+      "id": "b64cfb40-11c8-4bb0-a816-6fff12cc46ed",
       "name": "HTTP Request"
     },
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "mydiet",
+        "path": "mydiet-json",
         "responseMode": "lastNode",
         "options": {}
       },
@@ -181,11 +157,11 @@
       "typeVersion": 2.1,
       "position": [
         -1648,
-        64
+        48
       ],
-      "id": "c9ec8412-611c-4ad4-990a-58a44b5ef3a3",
+      "id": "58a1bce3-e255-4fa7-a9fb-e12b283a90ea",
       "name": "Webhook",
-      "webhookId": "7a92a7aa-9a4a-4ddb-a7f2-684c70eea40b"
+      "webhookId": "5f7aa243-bf80-4c0e-9a82-10c09d189a6f"
     },
     {
       "parameters": {
@@ -199,21 +175,35 @@
         -1184,
         400
       ],
-      "id": "6cd11400-4ccd-4ef2-95b1-a55fe28efbae",
+      "id": "e978de79-4350-4bf4-8c3b-12de2756315a",
       "name": "Simple Memory"
     },
     {
       "parameters": {
-        "jsCode": "// 1. 取得 AI Agent 的輸出文字\nlet aiContent = $input.first().json.output || \"\";\n\n// 2. 尋找 JSON 的大括號範圍\nlet startIndex = aiContent.indexOf('{');\nlet endIndex = aiContent.lastIndexOf('}');\n\nlet parsedData = {};\n\n// 3. 判斷是否有 JSON 格式\nif (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {\n    // 【情況 A：有找到 JSON】嘗試擷取並解析\n    let jsonString = aiContent.substring(startIndex, endIndex + 1);\n    try {\n        parsedData = JSON.parse(jsonString);\n        \n        // 檢查 AI 是否有把回覆寫在 JSON 外面（前面）\n        let replyText = aiContent.substring(0, startIndex).trim();\n        // 清理開頭可能多出的引號或反斜線\n        replyText = replyText.replace(/^\"+|\"+$/g, '').trim();\n        \n        if (!parsedData.agent_reply) {\n            parsedData.agent_reply = replyText || \"已為您記錄。\";\n        }\n    } catch (error) {\n        // 萬一 JSON 格式壞掉解析失敗的備用方案\n        parsedData = { \n            summary: \"JSON 解析失敗\", \n            details: [],\n            agent_reply: aiContent \n        };\n    }\n} else {\n    // 【情況 B：完全沒有 JSON (純聊天 / AI 追問)】\n    // 也就是您截圖中遇到的情況，我們不報錯，而是把 AI 說的話直接存起來\n    parsedData = {\n        summary: \"Chat Only\",\n        details: [],\n        agent_reply: aiContent.trim() \n    };\n}\n\n// 4. 回傳給下一個節點 (n8n 標準格式)\nreturn [ { json: parsedData } ];"
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"agent_reply\": {\n      \"type\": \"string\",\n      \"description\": \"The friendly conversational reply to the user. Must be in the user's language.\"\n    },\n    \"summary\": {\n      \"type\": \"string\",\n      \"description\": \"A short summary of the meal, or 'Chat' if the user is just chatting.\"\n    },\n    \"details\": {\n      \"type\": \"array\",\n      \"description\": \"List of food items logged. Leave this array EMPTY [] if the user is just asking a question and not logging a meal.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"meal_time\": { \"type\": \"string\", \"enum\": [\"breakfast\", \"lunch\", \"dinner\", \"snack\"] },\n          \"food_name\": { \"type\": \"string\" },\n          \"food_name_en\": { \"type\": \"string\" },\n          \"main_ingredient\": { \"type\": \"string\" },\n          \"cooking_method\": { \"type\": \"string\" },\n          \"sauce_or_seasoning\": { \"type\": \"string\" },\n          \"style\": { \"type\": \"string\" },\n          \"nutrition\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"calories\": { \"type\": \"number\" },\n              \"protein\": { \"type\": \"number\" },\n              \"fat\": { \"type\": \"number\" },\n              \"carbohydrates\": { \"type\": \"number\" },\n              \"fiber\": { \"type\": \"number\" }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"required\": [\"agent_reply\", \"summary\", \"details\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -912,
+        400
+      ],
+      "id": "0741d4de-4104-46e7-906c-c0b0ad6f5f81",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "let replyItem=\"\";\n\n// 1. 取得上一個節點傳進來的資料\nconst inputData = $input.first().json;\n\n// 2. 提取準備要發送的回覆內容\nconst replyText = inputData.reply_text || \"\";\n\n// 3. 語言偵測 (檢查回覆內容中是否包含中文字)\nconst hasHanzi = /[\\u4e00-\\u9fa5]/.test(replyText);\n\nlet language = \"English\";\nif (hasHanzi) {\n    language = \"Chinese\";\n    replyItem=\"發現系統出現錯誤，請再發問試試或聯聯系統服務員\";\n}\nelse{\n  replyItem=\"System Error is found, please try again or call system administrator\";\n  \n}\n\n// 4. 輸出結果給下一個節點 (HTTP Request)\nreturn [{\n    json: {\n        language: language,\n        reply: replyItem\n    }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -944,
-        64
+        -688,
+        176
       ],
-      "id": "8ec46644-c7b9-4026-af3b-8a6be8e6d73a",
-      "name": "Custom Code: Parse the Output from AI Agent1"
+      "id": "d249262a-6115-443c-82eb-cbf0234d1f2d",
+      "name": "Detect Language of Input Message1"
     }
   ],
   "pinData": {},
@@ -222,7 +212,14 @@
       "main": [
         [
           {
-            "node": "Custom Code: Parse the Output from AI Agent1",
+            "node": "Detect Language of Input Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Detect Language of Input Message1",
             "type": "main",
             "index": 0
           }
@@ -245,22 +242,6 @@
         [
           {
             "node": "AI Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Custom Code: Parse the Output from AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Convert to File",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Detect Language of Input Message",
             "type": "main",
             "index": 0
           }
@@ -300,11 +281,22 @@
         ]
       ]
     },
-    "Custom Code: Parse the Output from AI Agent1": {
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Language of Input Message1": {
       "main": [
         [
           {
-            "node": "Custom Code: Parse the Output from AI Agent",
+            "node": "HTTP Request",
             "type": "main",
             "index": 0
           }
@@ -315,12 +307,13 @@
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "availableInMCP": false
   },
-  "versionId": "727e8b9c-c96c-4143-a267-9be9b84d5b93",
+  "versionId": "29ed120b-5c49-4f26-b52b-b6ceaae3dbb4",
   "meta": {
     "instanceId": "3d8809dc8963dcd69511a04dc9ba3b2805dbf7ebb4e574e80850adf3f13b73e6"
   },
-  "id": "8XaR5g2EZJGCK82x",
+  "id": "qRTxuECqzPrJCWw6",
   "tags": []
 }
