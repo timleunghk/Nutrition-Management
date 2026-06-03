@@ -1,12 +1,11 @@
 {
-  "name": "Smart Diet Agent WhatsApp QWen - Structured output JSON Parser",
+  "name": "Smart Diet Agent",
   "nodes": [
     {
       "parameters": {
         "promptType": "define",
         "text": "={{ $json.message }}",
         "hasOutputParser": true,
-        "needsFallback": true,
         "options": {
           "systemMessage": "={{ $json.system_prompt }}"
         }
@@ -14,10 +13,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -1232,
-        48
+        -1432,
+        -400
       ],
-      "id": "3e1a83c0-29d6-448e-bf8d-ee881ae64a32",
+      "id": "251c3d65-1b1c-462b-ae76-d86be0f5ffd6",
       "name": "AI Agent",
       "retryOnFail": false,
       "onError": "continueErrorOutput"
@@ -41,10 +40,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -1360,
-        400
+        -1488,
+        -48
       ],
-      "id": "73206d9f-9f9c-44d5-a07a-2272a713d489",
+      "id": "90f0cf28-0b30-4d2f-b58e-725c25816762",
       "name": "OpenAI Chat Model",
       "credentials": {
         "openAiApi": {
@@ -60,7 +59,7 @@
             {
               "id": "25c24ef3-46fe-4a5d-9cd5-b6805a373732",
               "name": "system_prompt",
-              "value": "=You are a professional nutritionist AI assistant. You must always output your response in valid JSON format.\n\n[LANGUAGE INSTRUCTIONS]\n1. Conversational Reply (\"agent_reply\"): \n   You MUST write your conversational response ENTIRELY in {{ /[\\u4e00-\\u9fa5]/.test($json.body.data.message.conversation) ? 'Traditional Chinese (Cantonese)' : 'English' }}.\n\n2. Data Fields (inside the \"details\" array):\n   - \"food_name\" MUST ALWAYS be in Traditional Chinese, regardless of the user's language.\n   - \"food_name_en\" MUST ALWAYS be the accurate English translation.\n   - \"meal_time\" MUST ALWAYS be in English (e.g., \"breakfast\", \"lunch\", \"dinner\", \"snack\").\n   - All other text fields in the details array MUST be in {{ /[\\u4e00-\\u9fa5]/.test($json.body.data.message.conversation) ? 'Traditional Chinese' : 'English' }}.\n\n[BEHAVIOR RULES]\n1. IF THE USER IS JUST CHATTING OR ASKING A QUESTION:\n   - Answer their question directly in the \"agent_reply\" field.\n   - Set \"summary\" to \"Chat\".\n   - Leave the \"details\" array EMPTY [].\n\n2. IF THE USER IS LOGGING A MEAL:\n   - Put your friendly confirmation/analysis in the \"agent_reply\" field.\n   - Set \"summary\" to a short description of the meal.\n   - Fill out the \"details\" array with the food nutritional info according to the language rules above.",
+              "value": "=Today is {{ new Date().toLocaleDateString('en-ca') }}\n\nYou are a professional nutritionist AI assistant. You must always output your response in valid JSON format.\n\n[LANGUAGE INSTRUCTIONS]\n1. Conversational Reply (\"agent_reply\"): \n   You MUST write your conversational response ENTIRELY in {{ /[\\u4e00-\\u9fa5]/.test($json.body.data.message.conversation) ? 'Traditional Chinese (Cantonese)' : 'English' }}.\n\n2. Data Fields (inside the \"details\" array):\n   - \"food_name\" MUST ALWAYS be in Traditional Chinese, regardless of the user's language.\n   - \"food_name_en\" MUST ALWAYS be the accurate English translation.\n   - \"meal_time\" MUST ALWAYS be in English (e.g., \"breakfast\", \"lunch\", \"dinner\", \"snack\").\n   - All other text fields in the details array MUST be in {{ /[\\u4e00-\\u9fa5]/.test($json.body.data.message.conversation) ? 'Traditional Chinese' : 'English' }}.\n\n[BEHAVIOR RULES]\n1. IF THE USER IS JUST CHATTING OR ASKING A QUESTION:\n   - Answer their question directly in the \"agent_reply\" field.\n   - Set \"summary\" to \"Chat\".\n   - Leave the \"details\" array EMPTY [].\n\n2. IF THE USER IS LOGGING A MEAL:\n   - Put your friendly confirmation/analysis in the \"agent_reply\" field.\n   - Set \"summary\" to a short description of the meal.\n   - Fill out the \"details\" array with the food nutritional info according to the language rules above.\n\nIMPORTANT: You MUST output the JSON object directly. Do NOT wrap your response in an \"output\" key or any other parent object. \n\nHere is the EXACT JSON structure you must follow:\n{\n  \"agent_reply\": \"你的回覆\",\n  \"summary\": \"Meal logged\",\n  \"mode\": \"Add\",\n\n  \"details\": [\n    {\n      \"record_date\":\"2026-06-01\",\n      \"meal_time\": \"breakfast\",\n      \"food_name\": \"香蕉\",\n      \"food_name_en\": \"Banana\",\n      \"main_ingredient\": \"香蕉\",\n      \"cooking_method\": \"生食\",\n      \"sauce_or_seasoning\": \"無\",\n      \"style\": \"水果\",\n      \"nutrition\": {\n        \"calories\": 105,\n        \"protein\": 1.3,\n        \"fat\": 0.4,\n        \"carbohydrates\": 27,\n        \"fiber\": 3.1\n      }\n    }\n  ]\n}",
               "type": "string"
             },
             {
@@ -78,13 +77,13 @@
             {
               "id": "1306dd0c-2e9e-4f4d-b2d9-ffc87fb84c30",
               "name": "Top P",
-              "value": 0.9,
+              "value": 0.5,
               "type": "number"
             },
             {
               "id": "3e6473da-a365-4f41-9d0b-8b4313f23408",
               "name": "Max Tokens",
-              "value": 1500,
+              "value": 1800,
               "type": "number"
             },
             {
@@ -92,31 +91,61 @@
               "name": "Frequency Penalty",
               "value": 0,
               "type": "number"
+            },
+            {
+              "id": "50440b3f-9348-498a-9723-d7bbae49ce5c",
+              "name": "Error Message English",
+              "value": "System Error is found, please try again or call system administrator",
+              "type": "string"
+            },
+            {
+              "id": "d3534369-0c27-4530-b95c-2542d91eb2f7",
+              "name": "Error Message Chinese",
+              "value": "發現系統出現錯誤，請試再發問或聯絡系統服務員",
+              "type": "string"
+            },
+            {
+              "id": "2a0288a5-f518-404d-a9bb-9e7d2d17dbe3",
+              "name": "Today Date",
+              "value": "={{ new Date().toLocaleDateString('en-HK') }}",
+              "type": "string"
+            },
+            {
+              "id": "6afe142b-4340-4077-9958-e1c2bff099c5",
+              "name": "WhatsApp Remote",
+              "value": "={{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "d2205ec8-8a5b-4c6a-a67a-e6b8dc23b64e",
+              "name": "WhatsApp Sender",
+              "value": "={{ $json.body.sender }}",
+              "type": "string"
             }
           ]
         },
         "options": {}
       },
-      "id": "1b3c7d5a-cd44-4954-a0ed-9de711578b41",
+      "id": "8aaad1b3-ac67-4e3d-bd1b-99959f1d20d1",
       "name": "Set Variables",
       "type": "n8n-nodes-base.set",
       "position": [
-        -1472,
-        48
+        -1712,
+        -400
       ],
       "typeVersion": 3.4
     },
     {
       "parameters": {
-        "jsCode": "// 1. 取得上一個節點傳進來的資料\nconst inputData = $input.first().json;\n\n// 2. 提取準備要發送的回覆內容\nconst replyText = inputData.reply_text || \"\";\n\n// 3. 語言偵測 (檢查回覆內容中是否包含中文字)\nconst hasHanzi = /[\\u4e00-\\u9fa5]/.test(replyText);\n\nlet language = \"English\";\nif (hasHanzi) {\n    language = \"Chinese\";\n}\n\n// 4. 輸出結果給下一個節點 (HTTP Request)\nreturn [{\n    json: {\n        language: language,\n        reply: $input.first().json.output.agent_reply\n    }\n}];"
+        "jsCode": "// 1. 取得上一個節點傳進來的資料\nconst inputData = $input.first().json;\n\n// 2. 提取準備要發送的回覆內容\nconst replyText = inputData.reply_text || \"\";\n\n// 3. 語言偵測 (檢查回覆內容中是否包含中文字)\nconst hasHanzi = /[\\u4e00-\\u9fa5]/.test(replyText);\n\nlet language = \"English\";\nif (hasHanzi) {\n    language = \"Chinese\";\n}\n\n// 4. 輸出結果給下一個節點 (HTTP Request)\nreturn [{\n    json: {\n        error: false,\n        language: language,\n        remoteJid: $('Webhook').first().json.body.data.key.remoteJid,\n        sender:$('Webhook').first().json.body.sender,\n        reply: $input.first().json.output.agent_reply,\n        mode:$input.first().json.output.mode,\n        details:$input.first().json.output.details\n    }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -704,
-        -32
+        -1024,
+        -496
       ],
-      "id": "d14f02d6-34bc-4394-8293-809d990fb6b0",
+      "id": "f4bb0df5-b91f-4989-94c3-8c0a6a9a7af9",
       "name": "Detect Language of Input Message"
     },
     {
@@ -140,10 +169,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -320,
-        64
+        -192,
+        -224
       ],
-      "id": "b64cfb40-11c8-4bb0-a816-6fff12cc46ed",
+      "id": "0e3d4e9b-f06f-44a5-8e23-12488251a255",
       "name": "HTTP Request"
     },
     {
@@ -156,54 +185,385 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1648,
-        48
+        -1936,
+        -400
       ],
-      "id": "58a1bce3-e255-4fa7-a9fb-e12b283a90ea",
+      "id": "0c7f2d02-76f8-4b32-afdd-065c1be7dbf1",
       "name": "Webhook",
-      "webhookId": "5f7aa243-bf80-4c0e-9a82-10c09d189a6f"
-    },
-    {
-      "parameters": {
-        "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Webhook').item.json.body.data.key.remoteJid }}",
-        "contextWindowLength": 20
-      },
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
-      "position": [
-        -1184,
-        400
-      ],
-      "id": "e978de79-4350-4bf4-8c3b-12de2756315a",
-      "name": "Simple Memory"
+      "webhookId": "895f1085-0c2f-470a-b860-3bbbc3963f58"
     },
     {
       "parameters": {
         "schemaType": "manual",
-        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"agent_reply\": {\n      \"type\": \"string\",\n      \"description\": \"The friendly conversational reply to the user. Must be in the user's language.\"\n    },\n    \"summary\": {\n      \"type\": \"string\",\n      \"description\": \"A short summary of the meal, or 'Chat' if the user is just chatting.\"\n    },\n    \"details\": {\n      \"type\": \"array\",\n      \"description\": \"List of food items logged. Leave this array EMPTY [] if the user is just asking a question and not logging a meal.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"meal_time\": { \"type\": \"string\", \"enum\": [\"breakfast\", \"lunch\", \"dinner\", \"snack\"] },\n          \"food_name\": { \"type\": \"string\" },\n          \"food_name_en\": { \"type\": \"string\" },\n          \"main_ingredient\": { \"type\": \"string\" },\n          \"cooking_method\": { \"type\": \"string\" },\n          \"sauce_or_seasoning\": { \"type\": \"string\" },\n          \"style\": { \"type\": \"string\" },\n          \"nutrition\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"calories\": { \"type\": \"number\" },\n              \"protein\": { \"type\": \"number\" },\n              \"fat\": { \"type\": \"number\" },\n              \"carbohydrates\": { \"type\": \"number\" },\n              \"fiber\": { \"type\": \"number\" }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"required\": [\"agent_reply\", \"summary\", \"details\"]\n}"
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"agent_reply\": {\n      \"type\": \"string\",\n      \"description\": \"The friendly conversational reply to the user. Must be in the user's language.\"\n    },\n    \"summary\": {\n      \"type\": \"string\",\n      \"description\": \"A short summary of the meal, or 'Chat'\"\n    },\n    \"mode\":{\n      \"type\": \"string\",\n      \"description\": \"CRUD Indicator\"\n    },\n    \"details\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\"\n          },\n          \"record_date\":{\n            \"type\": \"string\"\n          },\n          \"food_name\": {\n            \"type\": \"string\"\n          },\n          \"meal_time\": {\n            \"type\": \"string\"\n          },\n          \"food_name_en\": {\n            \"type\": \"string\"\n          },\n          \"main_ingredient\": {\n            \"type\": \"string\"\n          },\n          \"cooking_method\": {\n            \"type\": \"string\"\n          },\n          \"sauce_or_seasoning\": {\n            \"type\": \"string\"\n          },\n          \"style\": {\n            \"type\": \"string\"\n          },\n          \"nutrition\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"calories\": {\n                \"type\": \"number\"\n              },\n              \"carbohydrates\": {\n                \"type\": \"number\"\n              },\n              \"fat\": {\n                \"type\": \"number\"\n              },\n              \"fiber\": {\n                \"type\": \"number\"\n              },\n              \"protein\": {\n                \"type\": \"number\"\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}"
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        -912,
-        400
+        -1232,
+        -48
       ],
-      "id": "0741d4de-4104-46e7-906c-c0b0ad6f5f81",
+      "id": "83836ca3-4a92-4a5f-88ef-31e86ff52323",
       "name": "Structured Output Parser"
     },
     {
       "parameters": {
-        "jsCode": "let replyItem=\"\";\n\n// 1. 取得上一個節點傳進來的資料\nconst inputData = $input.first().json;\n\n// 2. 提取準備要發送的回覆內容\nconst replyText = inputData.reply_text || \"\";\n\n// 3. 語言偵測 (檢查回覆內容中是否包含中文字)\nconst hasHanzi = /[\\u4e00-\\u9fa5]/.test(replyText);\n\nlet language = \"English\";\nif (hasHanzi) {\n    language = \"Chinese\";\n    replyItem=\"發現系統出現錯誤，請再發問試試或聯聯系統服務員\";\n}\nelse{\n  replyItem=\"System Error is found, please try again or call system administrator\";\n  \n}\n\n// 4. 輸出結果給下一個節點 (HTTP Request)\nreturn [{\n    json: {\n        language: language,\n        reply: replyItem\n    }\n}];"
+        "jsCode": "let replyItem=\"\";\n\n// 1. 取得上一個節點傳進來的資料\nconst inputData = $input.first().json;\n\n// 2. 提取準備要發送的回覆內容\nconst replyText = inputData.message || \"\";\n\n// 3. 語言偵測 (檢查回覆內容中是否包含中文字)\nconst hasHanzi = /[\\u4e00-\\u9fa5]/.test(replyText);\n\nlet language = \"English\";\nif (hasHanzi) {\n    language = \"Chinese\";\n    replyItem=$('Set Variables').first().json[\"Error Message Chinese\"];\n}\nelse{\n  replyItem=$('Set Variables').first().json[\"Error Message English\"];\n  \n}\n\n// 4. 輸出結果給下一個節點 (HTTP Request)\nreturn [{\n    json: {\n        error:true,\n      remoteJid: $('Webhook').first().json.body.data.key.remoteJid,\n      sender:$('Webhook').first().json.body.server_url,\n        language: language,\n        reply: replyItem\n    }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -688,
-        176
+        -1024,
+        -304
       ],
-      "id": "d249262a-6115-443c-82eb-cbf0234d1f2d",
+      "id": "c2a8a94d-10f4-4c6c-8b47-c91192d7d143",
       "name": "Detect Language of Input Message1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f2f0060a-9ea4-4919-9c68-8cd3804f9f5c",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -800,
+        -400
+      ],
+      "id": "bf6a2064-2497-47ad-a170-4444483d3ef4",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "details",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        -752
+      ],
+      "id": "cd79c2a8-a76b-435b-b9a3-a54be1f766fb",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        96,
+        -464
+      ],
+      "id": "f423c173-c67e-4a1b-a0b3-25487ee88ce1",
+      "name": "END"
+    },
+    {
+      "parameters": {
+        "description": "Use this tool to get the user's diet history. You must provide the \"created_datetime\" parameter in \"YYYY-MM-DD\" format. Calculate the exact target date based on today's date.",
+        "workflowId": {
+          "__rl": true,
+          "value": "Rsn8E0LlVOXs7SKx",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Rsn8E0LlVOXs7SKx",
+          "cachedResultName": "MyDiet-History"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "whatsapp_receiver": "={{ $('Set Variables').item.json[\"WhatsApp Remote\"] }}",
+            "whatsapp_sender": "={{ $('Set Variables').item.json[\"WhatsApp Sender\"] }}",
+            "created_datetime": "={{ $fromAI('input') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "created_datetime",
+              "displayName": "created_datetime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "whatsapp_sender",
+              "displayName": "whatsapp_sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "whatsapp_receiver",
+              "displayName": "whatsapp_receiver",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -1360,
+        -176
+      ],
+      "id": "88e37420-07a6-4523-9f01-1f5161f31723",
+      "name": "Call 'MyDiet-History'"
+    },
+    {
+      "parameters": {
+        "content": "## AI Agent\n\nAI Agent: LangChain + Ollama\nModel: QWen 3.5:9B\nDatabase: MySQL\nSub Workflow \"Call My Diet History\" is used for getting data based on Sender and Receiver WhatsApp ID and Date for getting latest diet data\nStructured JSON Parser: Pre-defined Schema is used for acurate and structured JSON output from AI Agent\n",
+        "height": 880,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        -752
+      ],
+      "id": "ad0ca8fa-df2c-4dbe-ac6b-b1326401406c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f2f0060a-9ea4-4919-9c68-8cd3804f9f5c",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "Add",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -576,
+        -472
+      ],
+      "id": "078451a7-8233-4ee1-8853-e4c5478a8905",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "table": {
+          "__rl": true,
+          "value": "food_details",
+          "mode": "list",
+          "cachedResultName": "food_details"
+        },
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "meal_time",
+              "value": "={{ $json.meal_time }}"
+            },
+            {
+              "column": "food_name",
+              "value": "={{ $json.food_name }}"
+            },
+            {
+              "column": "food_name_en",
+              "value": "={{ $json.food_name_en }}"
+            },
+            {
+              "column": "main_ingredient",
+              "value": "={{ $json.main_ingredient }}"
+            },
+            {
+              "column": "cooking_method",
+              "value": "={{ $json.cooking_method }}"
+            },
+            {
+              "column": "sauce_or_seasoning",
+              "value": "={{ $json.sauce_or_seasoning }}"
+            },
+            {
+              "column": "style",
+              "value": "={{ $json.style }}"
+            },
+            {
+              "column": "calories",
+              "value": "={{ $json.nutrition.calories }}"
+            },
+            {
+              "column": "protein",
+              "value": "={{ $json.nutrition.protein }}"
+            },
+            {
+              "column": "fat",
+              "value": "={{ $json.nutrition.fat }}"
+            },
+            {
+              "column": "carbohydrates",
+              "value": "={{ $json.nutrition.carbohydrates }}"
+            },
+            {
+              "column": "fiber",
+              "value": "={{ $json.nutrition.fiber }}"
+            },
+            {
+              "column": "whatsapp_remotejid",
+              "value": "={{ $('Detect Language of Input Message').item.json.remoteJid }}"
+            },
+            {
+              "column": "whatsapp_sender",
+              "value": "={{ $('Detect Language of Input Message').item.json.sender }}"
+            },
+            {
+              "column": "record_date",
+              "value": "={{ $json.record_date }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        -128,
+        -752
+      ],
+      "id": "adcec4ad-5f17-4374-8ba9-486f07f7d71f",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "mySql": {
+          "id": "zJvPjFytFgVlOREA",
+          "name": "MySQL NUITITION account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Variables Setup\n",
+        "height": 336,
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1768,
+        -576
+      ],
+      "id": "81e2e8c4-6c3c-4186-908f-37a090ba9d7b",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Add Records to MySQL DB",
+        "height": 256,
+        "width": 384
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        -832
+      ],
+      "id": "77f09828-04b2-49b9-81ef-b3dca1f9dc85",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Prepare JSON Output based on result generted from AI Agent",
+        "height": 560,
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        -704
+      ],
+      "id": "8d52c9f9-70c1-4071-b711-546e91c4dd78",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## 2nd If Node\n\nIf mode=\"Add\" then add records\nElse\nEnd Workflow",
+        "height": 304,
+        "width": 256
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        -592
+      ],
+      "id": "5f86d3ce-4e3e-49f6-b1f0-5ee86bbd91f0",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## 1st If Node\n\nIf error=false then continue\nelse\nShow error message to user\n",
+        "height": 288,
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        -528
+      ],
+      "id": "26b1a4d8-6eef-44a9-a07b-794518e84a41",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## WhatsApp Request\nSend message based on two JS custom nodes",
+        "height": 352,
+        "width": 256
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        -368
+      ],
+      "id": "83cdfe9a-77ec-4e91-a978-93b3f201e5c9",
+      "name": "Sticky Note6"
     }
   ],
   "pinData": {},
@@ -252,7 +612,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -265,17 +625,6 @@
           {
             "node": "Set Variables",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Simple Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_memory",
             "index": 0
           }
         ]
@@ -296,7 +645,92 @@
       "main": [
         [
           {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
             "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "END",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'MyDiet-History'": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "END",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "END",
             "type": "main",
             "index": 0
           }
@@ -310,10 +744,11 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "29ed120b-5c49-4f26-b52b-b6ceaae3dbb4",
+  "versionId": "d40c6bc2-c539-419c-9da2-218ab5a93dcf",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "3d8809dc8963dcd69511a04dc9ba3b2805dbf7ebb4e574e80850adf3f13b73e6"
   },
-  "id": "qRTxuECqzPrJCWw6",
+  "id": "CpYgHtDQQyFgyVPw",
   "tags": []
 }

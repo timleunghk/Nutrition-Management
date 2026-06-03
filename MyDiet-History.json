@@ -1,0 +1,79 @@
+{
+  "name": "MyDiet-History",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "created_datetime"
+            },
+            {
+              "name": "whatsapp_sender"
+            },
+            {
+              "name": "whatsapp_receiver"
+            }
+          ]
+        }
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        64,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\nrecord_date,\nmeal_time,\nfood_name, \nfood_name_en, \nmain_ingredient,\ncooking_method, \nsauce_or_seasoning,\nstyle, \ncalories,\nprotein,\nfat, \ncarbohydrates, \nfiber\nFROM food_details\nWHERE DATE(record_date) = \"{{ $json.created_datetime}}\"\nAND whatsapp_remotejid = \"{{ $json.whatsapp_receiver}}\"\nAND whatsapp_sender = \"{{ $json.whatsapp_sender}}\";",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        320,
+        224
+      ],
+      "id": "599f1fa7-4d4a-4e35-b23b-ae3dc6195ca9",
+      "name": "Execute a SQL query",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mySql": {
+          "id": "zJvPjFytFgVlOREA",
+          "name": "MySQL NUITITION account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "9c64325d-5dd0-4b67-bb00-9d5c6b51188a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3d8809dc8963dcd69511a04dc9ba3b2805dbf7ebb4e574e80850adf3f13b73e6"
+  },
+  "id": "Rsn8E0LlVOXs7SKx",
+  "tags": []
+}
