@@ -1,5 +1,8 @@
 # 🥗 Smart Diet AI Agent (n8n + Qwen 3.5 + WhatsApp + MySQL Integration)
 
+![Smart Diet Agent Demo](demo.png)
+
+
 An intelligent, privacy-first dietary tracking and conversational agent built with **n8n**, **LangChain**, and a **Local LLM (Qwen 3.5 9B via Ollama)**. This automated workflow acts as a WhatsApp-based nutritionist. It features conversational memory and tool-calling capabilities, allowing it to distinguish between casual queries, meal logging, and history retrieval, seamlessly transforming natural language into structured nutritional data without sending sensitive data to external cloud providers.
 
 ## 🌟 What's New
