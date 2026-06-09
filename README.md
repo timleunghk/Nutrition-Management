@@ -50,3 +50,15 @@ To run this workflow, you will need:
 ## 💡 Enterprise / Government Use Case
 
 This workflow demonstrates **Enterprise-grade Conversational AI, Tool Calling, and Secure Database Management**. By leveraging a local LLM with SQL database integration, organizations can deploy intelligent assistants for frontline staff or citizens via familiar platforms like WhatsApp. The structured output parsing ensures that data entering the backend database is strictly formatted and translated, eliminating the risk of unstructured data corruption while maintaining strict data privacy.
+
+## 🚀 Production & Enterprise Scaling Considerations
+
+To transition this workflow from a prototype to a high-availability government or enterprise production environment, the following architectural enhancements are designed:
+
+### 1. Handling Large Datasets & Preventing Context Window Overflow
+When dealing with massive operational data or long-term meal histories, feeding raw data into the LLM will cause Context Window saturation or performance degradation. The scaling strategy includes:
+* **RAG (Retrieval-Augmented Generation) with Chunking:** Utilizing recursive text splitters to break large text corpora into smaller chunks (e.g., 512 tokens), embedding them into a Vector Database, and retrieving only the top-K most relevant chunks using semantic search.
+* **Database Pagination & Aggregation:** Offloading heavy calculations to the MySQL engine (or MongoDB aggregation pipelines) before passing summarized, highly dense context back to the AI Agent.
+
+### 2. Message Queueing & Rate Limiting
+To handle concurrent traffic spikes from thousands of WhatsApp users simultaneously, a Message Queue (e.g., RabbitMQ or Redis) will be implemented before the n8n Webhook Trigger to throttle requests, handle backpressure, and execute graceful retries.
